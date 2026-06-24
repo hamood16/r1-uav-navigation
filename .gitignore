@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# VSCode
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.ruff_cache/
+
+# Logs and results
+results/logs/*
+results/trained_models/*
+results/videos/*
+results/plots/*
+
+# Keep folder structure
+!results/logs/.gitkeep
+!results/trained_models/.gitkeep
+!results/videos/.gitkeep
+!results/plots/.gitkeep
+
+# TensorBoard
+runs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Unreal Engine later
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+*.sln
+*.VC.db
+*.opensdf
+*.opendb

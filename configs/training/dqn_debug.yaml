@@ -1,0 +1,7 @@
+algorithm: DQN
+total_timesteps: 10000
+learning_rate: 0.0001
+buffer_size: 50000
+batch_size: 32
+gamma: 0.99
+seed: 42

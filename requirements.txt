@@ -1,0 +1,12 @@
+numpy
+pandas
+matplotlib
+pyyaml
+gymnasium
+stable-baselines3
+tensorboard
+opencv-python
+pytest
+ruff
+black
+mypy
