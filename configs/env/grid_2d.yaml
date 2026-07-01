@@ -1,0 +1,6 @@
+env_name: GridUAVEnv
+grid_size: 10
+max_steps: 100
+num_obstacles: 10
+random_start: true
+random_goal: true

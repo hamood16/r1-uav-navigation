@@ -1,0 +1,179 @@
+"""A minimal two-dimensional grid environment for UAV navigation."""
+
+from __future__ import annotations
+
+import math
+
+import gymnasium as gym
+import numpy as np
+from gymnasium import spaces
+
+Position = tuple[int, int]
+
+
+class GridUAVEnv(gym.Env[np.ndarray, int]):
+    """A discrete grid world with a goal and static obstacles."""
+
+    metadata = {"render_modes": []}
+
+    _ACTION_DELTAS: dict[int, Position] = {
+        0: (0, 1),  # Up
+        1: (0, -1),  # Down
+        2: (-1, 0),  # Left
+        3: (1, 0),  # Right
+        4: (0, 0),  # Hover
+    }
+
+    def __init__(
+        self,
+        grid_size: int = 10,
+        max_steps: int = 100,
+        num_obstacles: int = 10,
+        random_start: bool = True,
+        random_goal: bool = True,
+    ) -> None:
+        super().__init__()
+
+        if grid_size < 2:
+            raise ValueError("grid_size must be at least 2")
+        if max_steps < 1:
+            raise ValueError("max_steps must be at least 1")
+        if num_obstacles < 0:
+            raise ValueError("num_obstacles cannot be negative")
+
+        max_obstacles = grid_size**2 - 2
+        if num_obstacles > max_obstacles:
+            raise ValueError(
+                f"num_obstacles cannot exceed {max_obstacles} for this grid"
+            )
+
+        self.grid_size = grid_size
+        self.max_steps = max_steps
+        self.num_obstacles = num_obstacles
+        self.random_start = random_start
+        self.random_goal = random_goal
+
+        self.action_space = spaces.Discrete(5)
+        max_distance = math.hypot(grid_size - 1, grid_size - 1)
+        self.observation_space = spaces.Box(
+            low=np.zeros(5, dtype=np.float32),
+            high=np.array(
+                [
+                    grid_size - 1,
+                    grid_size - 1,
+                    grid_size - 1,
+                    grid_size - 1,
+                    max_distance,
+                ],
+                dtype=np.float32,
+            ),
+            dtype=np.float32,
+        )
+
+        self.uav_position: Position = (0, 0)
+        self.goal_position: Position = (grid_size - 1, grid_size - 1)
+        self.obstacles: set[Position] = set()
+        self.current_step = 0
+        self._max_obstacle_distance = max_distance
+
+    def reset(
+        self,
+        *,
+        seed: int | None = None,
+        options: dict | None = None,
+    ) -> tuple[np.ndarray, dict]:
+        """Start a new episode with non-overlapping placements."""
+        super().reset(seed=seed)
+        del options
+
+        fixed_start = (0, 0)
+        fixed_goal = (self.grid_size - 1, self.grid_size - 1)
+        reserved: set[Position] = set()
+        if not self.random_start:
+            reserved.add(fixed_start)
+        if not self.random_goal:
+            reserved.add(fixed_goal)
+
+        available = [
+            (x, y)
+            for x in range(self.grid_size)
+            for y in range(self.grid_size)
+            if (x, y) not in reserved
+        ]
+
+        if self.random_start:
+            self.uav_position = self._take_random_position(available)
+        else:
+            self.uav_position = fixed_start
+
+        if self.random_goal:
+            self.goal_position = self._take_random_position(available)
+        else:
+            self.goal_position = fixed_goal
+
+        self.obstacles = {
+            self._take_random_position(available) for _ in range(self.num_obstacles)
+        }
+        self.current_step = 0
+
+        return self._get_observation(), {}
+
+    def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
+        """Apply one discrete movement action."""
+        if not self.action_space.contains(action):
+            raise ValueError(
+                f"invalid action {action!r}; expected an integer from 0 to 4"
+            )
+
+        dx, dy = self._ACTION_DELTAS[int(action)]
+        candidate = (self.uav_position[0] + dx, self.uav_position[1] + dy)
+        terminated = False
+
+        if not self._is_within_grid(candidate):
+            reward = -0.10
+        elif candidate in self.obstacles:
+            reward = -1.0
+            terminated = True
+        else:
+            self.uav_position = candidate
+            if self.uav_position == self.goal_position:
+                reward = 1.0
+                terminated = True
+            else:
+                reward = -0.01
+
+        self.current_step += 1
+        truncated = self.current_step >= self.max_steps and not terminated
+
+        return self._get_observation(), reward, terminated, truncated, {}
+
+    def _take_random_position(self, positions: list[Position]) -> Position:
+        index = int(self.np_random.integers(len(positions)))
+        return positions.pop(index)
+
+    def _is_within_grid(self, position: Position) -> bool:
+        x, y = position
+        return 0 <= x < self.grid_size and 0 <= y < self.grid_size
+
+    def _get_observation(self) -> np.ndarray:
+        if self.obstacles:
+            nearest_obstacle_distance = min(
+                math.hypot(
+                    self.uav_position[0] - obstacle[0],
+                    self.uav_position[1] - obstacle[1],
+                )
+                for obstacle in self.obstacles
+            )
+        else:
+            nearest_obstacle_distance = self._max_obstacle_distance
+
+        return np.array(
+            [
+                self.uav_position[0],
+                self.uav_position[1],
+                self.goal_position[0],
+                self.goal_position[1],
+                nearest_obstacle_distance,
+            ],
+            dtype=np.float32,
+        )
