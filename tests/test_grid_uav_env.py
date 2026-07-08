@@ -43,6 +43,61 @@ def test_reset_returns_valid_observation_and_info() -> None:
     assert isinstance(info, dict)
 
 
+def test_default_step_observation_shape_remains_five_values() -> None:
+    env = GridUAVEnv(grid_size=5, num_obstacles=0)
+    env.reset(seed=42)
+
+    observation, _, _, _, _ = env.step(4)
+
+    assert observation.shape == (5,)
+
+
+def test_lidar_reset_observation_has_nine_values_and_belongs_to_space() -> None:
+    env = GridUAVEnv(use_lidar=True)
+
+    observation, _ = env.reset(seed=42)
+
+    assert observation.shape == (9,)
+    assert env.observation_space.contains(observation)
+
+
+def test_lidar_values_are_appended_in_up_down_left_right_order() -> None:
+    env = GridUAVEnv(grid_size=5, num_obstacles=0, use_lidar=True)
+    env.reset(seed=42)
+    env.uav_position = (2, 2)
+    env.goal_position = (4, 4)
+    env.obstacles = {(2, 3), (0, 2)}
+
+    observation = env._get_observation()
+
+    assert observation[-4:].tolist() == pytest.approx([0.0, 2.0, 1.0, 2.0])
+
+
+def test_lidar_detects_wall_clearance_correctly() -> None:
+    env = GridUAVEnv(grid_size=5, num_obstacles=0, use_lidar=True)
+    env.reset(seed=42)
+    env.uav_position = (2, 2)
+    env.goal_position = (4, 4)
+    env.obstacles = set()
+
+    observation = env._get_observation()
+
+    assert observation[-4:].tolist() == pytest.approx([2.0, 2.0, 2.0, 2.0])
+
+
+def test_lidar_updates_after_movement() -> None:
+    env = GridUAVEnv(grid_size=5, num_obstacles=0, use_lidar=True)
+    env.reset(seed=42)
+    env.uav_position = (2, 2)
+    env.goal_position = (4, 4)
+    env.obstacles = {(2, 4)}
+
+    observation, _, _, _, _ = env.step(3)
+
+    assert env.uav_position == (3, 2)
+    assert observation[-4:].tolist() == pytest.approx([2.0, 2.0, 3.0, 1.0])
+
+
 def test_reset_places_all_entities_in_distinct_valid_cells() -> None:
     env = GridUAVEnv(grid_size=6, num_obstacles=8)
 
@@ -173,6 +228,95 @@ def test_reaching_goal_updates_position_and_terminates() -> None:
     assert truncated is False
 
 
+def test_custom_goal_reward_is_used() -> None:
+    env = GridUAVEnv(grid_size=5, num_obstacles=0, goal_reward=10.0)
+    env.reset(seed=42)
+    env.uav_position = (2, 2)
+    env.goal_position = (2, 3)
+    env.obstacles = set()
+
+    _, reward, terminated, truncated, _ = env.step(0)
+
+    assert reward == pytest.approx(10.0)
+    assert terminated is True
+    assert truncated is False
+
+
+def test_custom_collision_penalty_is_used() -> None:
+    env = GridUAVEnv(grid_size=5, num_obstacles=0, collision_penalty=-2.0)
+    env.reset(seed=42)
+    env.uav_position = (2, 2)
+    env.goal_position = (4, 4)
+    env.obstacles = {(2, 3)}
+
+    _, reward, terminated, truncated, _ = env.step(0)
+
+    assert env.uav_position == (2, 2)
+    assert reward == pytest.approx(-2.0)
+    assert terminated is True
+    assert truncated is False
+
+
+def test_progress_reward_is_positive_when_moving_closer_to_goal() -> None:
+    env = GridUAVEnv(
+        grid_size=5,
+        num_obstacles=0,
+        step_penalty=-0.02,
+        progress_reward_scale=0.5,
+    )
+    env.reset(seed=42)
+    env.uav_position = (0, 0)
+    env.goal_position = (2, 0)
+    env.obstacles = set()
+
+    _, reward, terminated, truncated, _ = env.step(3)
+
+    assert env.uav_position == (1, 0)
+    assert reward == pytest.approx(0.48)
+    assert terminated is False
+    assert truncated is False
+
+
+def test_progress_reward_is_negative_when_moving_farther_from_goal() -> None:
+    env = GridUAVEnv(
+        grid_size=5,
+        num_obstacles=0,
+        step_penalty=-0.02,
+        progress_reward_scale=0.5,
+    )
+    env.reset(seed=42)
+    env.uav_position = (1, 0)
+    env.goal_position = (0, 0)
+    env.obstacles = set()
+
+    _, reward, terminated, truncated, _ = env.step(3)
+
+    assert env.uav_position == (2, 0)
+    assert reward == pytest.approx(-0.52)
+    assert terminated is False
+    assert truncated is False
+
+
+def test_hover_has_zero_progress_shaping() -> None:
+    env = GridUAVEnv(
+        grid_size=5,
+        num_obstacles=0,
+        hover_penalty=-0.05,
+        progress_reward_scale=1.0,
+    )
+    env.reset(seed=42)
+    env.uav_position = (1, 0)
+    env.goal_position = (4, 0)
+    env.obstacles = set()
+
+    _, reward, terminated, truncated, _ = env.step(4)
+
+    assert env.uav_position == (1, 0)
+    assert reward == pytest.approx(-0.05)
+    assert terminated is False
+    assert truncated is False
+
+
 def test_max_steps_truncates_episode_without_termination() -> None:
     env = GridUAVEnv(grid_size=5, max_steps=2, num_obstacles=0)
     env.reset(seed=42)
@@ -187,6 +331,26 @@ def test_max_steps_truncates_episode_without_termination() -> None:
     assert second_terminated is False
     assert second_truncated is True
     assert env.current_step == 2
+
+
+def test_timeout_penalty_is_added_on_truncation() -> None:
+    env = GridUAVEnv(
+        grid_size=5,
+        max_steps=1,
+        num_obstacles=0,
+        step_penalty=-0.02,
+        timeout_penalty=-2.0,
+    )
+    env.reset(seed=42)
+    env.uav_position = (2, 2)
+    env.goal_position = (4, 4)
+    env.obstacles = set()
+
+    _, reward, terminated, truncated, _ = env.step(4)
+
+    assert reward == pytest.approx(-2.02)
+    assert terminated is False
+    assert truncated is True
 
 
 @pytest.mark.parametrize("action", [-1, 5, 1.5, "up", None])

@@ -17,6 +17,16 @@ _GRID_UAV_ENV_REQUIRED_KEYS = (
     "random_start",
     "random_goal",
 )
+_GRID_UAV_ENV_OPTIONAL_KEYS = (
+    "use_lidar",
+    "step_penalty",
+    "hover_penalty",
+    "boundary_penalty",
+    "collision_penalty",
+    "goal_reward",
+    "timeout_penalty",
+    "progress_reward_scale",
+)
 
 
 def load_config(path: str | Path) -> dict[str, Any]:
@@ -52,10 +62,15 @@ def create_grid_uav_env_from_config(path: str | Path) -> GridUAVEnv:
             "Missing required GridUAVEnv config keys: " + ", ".join(missing_keys)
         )
 
-    return GridUAVEnv(
-        grid_size=config["grid_size"],
-        max_steps=config["max_steps"],
-        num_obstacles=config["num_obstacles"],
-        random_start=config["random_start"],
-        random_goal=config["random_goal"],
+    env_kwargs = {
+        "grid_size": config["grid_size"],
+        "max_steps": config["max_steps"],
+        "num_obstacles": config["num_obstacles"],
+        "random_start": config["random_start"],
+        "random_goal": config["random_goal"],
+    }
+    env_kwargs.update(
+        {key: config[key] for key in _GRID_UAV_ENV_OPTIONAL_KEYS if key in config}
     )
+
+    return GridUAVEnv(**env_kwargs)

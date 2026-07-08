@@ -50,6 +50,23 @@ def test_create_grid_uav_env_from_project_config_matches_yaml_values() -> None:
     assert env.num_obstacles == config["num_obstacles"]
     assert env.random_start is config["random_start"]
     assert env.random_goal is config["random_goal"]
+    assert env.use_lidar is False
+
+
+def test_create_grid_uav_env_from_shaped_config_sets_reward_attributes() -> None:
+    config = load_config("configs/env/grid_2d_static_full.yaml")
+
+    env = create_grid_uav_env_from_config("configs/env/grid_2d_static_full.yaml")
+
+    assert isinstance(env, GridUAVEnv)
+    assert env.use_lidar is True
+    assert env.step_penalty == pytest.approx(config["step_penalty"])
+    assert env.hover_penalty == pytest.approx(config["hover_penalty"])
+    assert env.boundary_penalty == pytest.approx(config["boundary_penalty"])
+    assert env.collision_penalty == pytest.approx(config["collision_penalty"])
+    assert env.goal_reward == pytest.approx(config["goal_reward"])
+    assert env.timeout_penalty == pytest.approx(config["timeout_penalty"])
+    assert env.progress_reward_scale == pytest.approx(config["progress_reward_scale"])
 
 
 def test_load_config_raises_for_missing_file(tmp_path: Path) -> None:
