@@ -322,13 +322,14 @@ def _plot_dynamic_obstacle_trails(
             dy = final_y - previous_y
             if dx != 0 or dy != 0:
                 axis.arrow(
-                    previous_x,
-                    previous_y,
-                    dx * 0.6,
-                    dy * 0.6,
+                    final_x,
+                    final_y,
+                    dx * 0.35,
+                    dy * 0.35,
                     color="gray",
                     head_width=0.12,
                     length_includes_head=True,
+                    zorder=5,
                 )
 
 
