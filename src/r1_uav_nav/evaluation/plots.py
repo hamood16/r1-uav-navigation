@@ -9,6 +9,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 
+import matplotlib.animation as animation  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 
 from r1_uav_nav.evaluation.metrics import EvaluationSummary, Position
@@ -125,6 +126,80 @@ def plot_collision_rate_bar(
     )
 
 
+def plot_dynamic_trajectory_png(
+    uav_positions: Sequence[Position],
+    dynamic_obstacle_positions: Sequence[Sequence[Position]],
+    start_position: Position,
+    goal_position: Position,
+    grid_size: int,
+    output_path: str | Path,
+    collision_step: int | None = None,
+) -> Path:
+    """Plot a dynamic UAV rollout with obstacle trails."""
+    saved_path = _prepare_output_path(output_path)
+    figure, axis = plt.subplots(figsize=(7, 7))
+    _setup_grid_axis(axis, grid_size, "Dynamic UAV trajectory")
+
+    _plot_dynamic_rollout_frame(
+        axis=axis,
+        uav_positions=uav_positions,
+        dynamic_obstacle_positions=dynamic_obstacle_positions,
+        start_position=start_position,
+        goal_position=goal_position,
+        grid_size=grid_size,
+        frame_index=len(uav_positions) - 1,
+        collision_step=collision_step,
+        show_trails=True,
+    )
+
+    figure.tight_layout()
+    figure.savefig(saved_path)
+    plt.close(figure)
+    return saved_path
+
+
+def plot_dynamic_trajectory_gif(
+    uav_positions: Sequence[Position],
+    dynamic_obstacle_positions: Sequence[Sequence[Position]],
+    start_position: Position,
+    goal_position: Position,
+    grid_size: int,
+    output_path: str | Path,
+    collision_step: int | None = None,
+    fps: int = 2,
+) -> Path:
+    """Animate a dynamic UAV rollout as a GIF."""
+    saved_path = _prepare_output_path(output_path)
+    figure, axis = plt.subplots(figsize=(7, 7))
+    frame_count = max(len(uav_positions), len(dynamic_obstacle_positions), 1)
+
+    def update(frame_index: int) -> None:
+        axis.clear()
+        _setup_grid_axis(axis, grid_size, "Dynamic UAV trajectory")
+        _plot_dynamic_rollout_frame(
+            axis=axis,
+            uav_positions=uav_positions,
+            dynamic_obstacle_positions=dynamic_obstacle_positions,
+            start_position=start_position,
+            goal_position=goal_position,
+            grid_size=grid_size,
+            frame_index=frame_index,
+            collision_step=collision_step,
+            show_trails=False,
+        )
+
+    rollout_animation = animation.FuncAnimation(
+        figure,
+        update,
+        frames=frame_count,
+        interval=1000 // fps,
+        repeat=False,
+    )
+    rollout_animation.save(saved_path, writer=animation.PillowWriter(fps=fps))
+    plt.close(figure)
+    return saved_path
+
+
 def _plot_rate_bar(
     rate: float,
     title: str,
@@ -151,6 +226,138 @@ def _plot_rate_bar(
     figure.savefig(saved_path)
     plt.close(figure)
     return saved_path
+
+
+def _setup_grid_axis(axis: plt.Axes, grid_size: int, title: str) -> None:
+    axis.set_title(title)
+    axis.set_xlabel("x")
+    axis.set_ylabel("y")
+    axis.set_xlim(-0.5, grid_size - 0.5)
+    axis.set_ylim(-0.5, grid_size - 0.5)
+    axis.set_xticks(range(grid_size))
+    axis.set_yticks(range(grid_size))
+    axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
+    axis.set_aspect("equal", adjustable="box")
+
+
+def _plot_dynamic_rollout_frame(
+    axis: plt.Axes,
+    uav_positions: Sequence[Position],
+    dynamic_obstacle_positions: Sequence[Sequence[Position]],
+    start_position: Position,
+    goal_position: Position,
+    grid_size: int,
+    frame_index: int,
+    collision_step: int | None,
+    show_trails: bool,
+) -> None:
+    del grid_size
+    max_uav_index = min(frame_index, len(uav_positions) - 1)
+    uav_positions_to_plot = uav_positions[: max_uav_index + 1]
+    obstacle_positions = _positions_at_frame(dynamic_obstacle_positions, frame_index)
+
+    axis.scatter(
+        [start_position[0]],
+        [start_position[1]],
+        marker="o",
+        color="tab:green",
+        s=120,
+        label="Start",
+    )
+    axis.scatter(
+        [goal_position[0]],
+        [goal_position[1]],
+        marker="*",
+        color="tab:red",
+        s=180,
+        label="Goal",
+    )
+
+    if show_trails:
+        _plot_dynamic_obstacle_trails(axis, dynamic_obstacle_positions)
+
+    if obstacle_positions:
+        obstacle_x, obstacle_y = zip(*obstacle_positions, strict=False)
+        axis.scatter(
+            obstacle_x,
+            obstacle_y,
+            marker="s",
+            color="black",
+            label="Dynamic obstacles",
+        )
+
+    if uav_positions_to_plot:
+        path_x, path_y = zip(*uav_positions_to_plot, strict=False)
+        axis.plot(path_x, path_y, color="tab:blue", marker="o", label="UAV path")
+
+    if collision_step is not None and frame_index >= collision_step:
+        collision_position = uav_positions[min(collision_step, len(uav_positions) - 1)]
+        axis.scatter(
+            [collision_position[0]],
+            [collision_position[1]],
+            marker="x",
+            color="tab:red",
+            s=200,
+            linewidths=3,
+            label="Collision",
+        )
+
+    axis.legend(loc="best")
+
+
+def _plot_dynamic_obstacle_trails(
+    axis: plt.Axes,
+    dynamic_obstacle_positions: Sequence[Sequence[Position]],
+) -> None:
+    trails = _get_dynamic_obstacle_trails(dynamic_obstacle_positions)
+    for trail in trails:
+        if not trail:
+            continue
+        trail_x, trail_y = zip(*trail, strict=False)
+        axis.plot(trail_x, trail_y, color="gray", alpha=0.5, linestyle=":")
+        if len(trail) >= 2:
+            previous_x, previous_y = trail[-2]
+            final_x, final_y = trail[-1]
+            dx = final_x - previous_x
+            dy = final_y - previous_y
+            if dx != 0 or dy != 0:
+                axis.arrow(
+                    previous_x,
+                    previous_y,
+                    dx * 0.6,
+                    dy * 0.6,
+                    color="gray",
+                    head_width=0.12,
+                    length_includes_head=True,
+                )
+
+
+def _get_dynamic_obstacle_trails(
+    dynamic_obstacle_positions: Sequence[Sequence[Position]],
+) -> list[list[Position]]:
+    max_obstacles = max(
+        (len(frame_positions) for frame_positions in dynamic_obstacle_positions),
+        default=0,
+    )
+    return [
+        [
+            frame_positions[obstacle_index]
+            for frame_positions in dynamic_obstacle_positions
+            if obstacle_index < len(frame_positions)
+        ]
+        for obstacle_index in range(max_obstacles)
+    ]
+
+
+def _positions_at_frame(
+    dynamic_obstacle_positions: Sequence[Sequence[Position]],
+    frame_index: int,
+) -> Sequence[Position]:
+    if not dynamic_obstacle_positions:
+        return []
+
+    safe_index = min(frame_index, len(dynamic_obstacle_positions) - 1)
+    return dynamic_obstacle_positions[safe_index]
 
 
 def _prepare_output_path(output_path: str | Path) -> Path:
