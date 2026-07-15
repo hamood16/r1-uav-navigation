@@ -1,0 +1,13 @@
+env_name: DynamicGridUAVEnv
+grid_size: 10
+max_steps: 100
+num_dynamic_obstacles: 5
+random_start: true
+random_goal: true
+step_penalty: -0.02
+hover_penalty: -0.08
+boundary_penalty: -0.50
+collision_penalty: -8.0
+goal_reward: 10.0
+timeout_penalty: -3.0
+progress_reward_scale: 0.3

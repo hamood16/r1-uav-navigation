@@ -1,0 +1,17 @@
+env_name: ContinuousDynamicUAVEnv
+world_size: 10.0
+max_steps: 220
+num_dynamic_obstacles: 3
+max_uav_speed: 1.0
+obstacle_speed: 0.5
+dt: 1.0
+collision_radius: 0.30
+goal_radius: 0.60
+random_start: true
+random_goal: true
+step_penalty: -0.02
+boundary_penalty: -0.50
+collision_penalty: -8.0
+goal_reward: 10.0
+timeout_penalty: -3.0
+progress_reward_scale: 0.3
