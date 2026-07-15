@@ -6,10 +6,12 @@ from r1_uav_nav.evaluation import (
     plot_dynamic_trajectory_gif,
     plot_dynamic_trajectory_png,
     plot_failure_rate_bar,
+    plot_metric_comparison,
     plot_path_length_curve,
     plot_reward_curve,
     plot_success_rate_bar,
     plot_trajectory,
+    plot_trajectory_overlay,
 )
 
 
@@ -46,6 +48,38 @@ def test_plot_path_length_curve_creates_non_empty_png(tmp_path: Path) -> None:
 
     plot_path_length_curve(
         path_lengths=[4.0, 0.0, 6.0],
+        output_path=output_path,
+    )
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
+def test_plot_metric_comparison_creates_non_empty_png(tmp_path: Path) -> None:
+    output_path = tmp_path / "metric_comparison.png"
+
+    plot_metric_comparison(
+        labels=["A*", "DQN"],
+        values=[1.0, 0.7],
+        title="Success rate comparison",
+        ylabel="Success rate",
+        output_path=output_path,
+    )
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
+def test_plot_trajectory_overlay_creates_non_empty_png(tmp_path: Path) -> None:
+    output_path = tmp_path / "trajectory_overlay.png"
+
+    plot_trajectory_overlay(
+        astar_positions=[(0, 0), (1, 0), (2, 0)],
+        dqn_positions=[(0, 0), (0, 1), (1, 1), (2, 1)],
+        obstacles={(3, 3)},
+        start_position=(0, 0),
+        goal_position=(4, 4),
+        grid_size=5,
         output_path=output_path,
     )
 

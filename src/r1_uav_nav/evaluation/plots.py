@@ -117,6 +117,108 @@ def plot_path_length_curve(
     return saved_path
 
 
+def plot_metric_comparison(
+    labels: Sequence[str],
+    values: Sequence[float],
+    title: str,
+    ylabel: str,
+    output_path: str | Path,
+) -> Path:
+    """Plot a simple bar comparison for named metrics."""
+    saved_path = _prepare_output_path(output_path)
+    figure, axis = plt.subplots(figsize=(7, 5))
+
+    axis.bar(labels, values, color=["tab:purple", "tab:blue"][: len(labels)])
+    axis.set_title(title)
+    axis.set_ylabel(ylabel)
+    axis.grid(True, axis="y", linestyle="--", linewidth=0.5, alpha=0.5)
+    for index, value in enumerate(values):
+        axis.text(index, value, f"{value:.2f}", ha="center", va="bottom")
+
+    figure.tight_layout()
+    figure.savefig(saved_path)
+    plt.close(figure)
+    return saved_path
+
+
+def plot_trajectory_overlay(
+    astar_positions: Sequence[Position],
+    dqn_positions: Sequence[Position],
+    obstacles: Sequence[Position] | set[Position],
+    start_position: Position,
+    goal_position: Position,
+    grid_size: int,
+    output_path: str | Path,
+) -> Path:
+    """Plot A* and DQN trajectories on the same static grid layout."""
+    saved_path = _prepare_output_path(output_path)
+    figure, axis = plt.subplots(figsize=(7, 7))
+
+    axis.set_title("Static A* vs DQN trajectory overlay")
+    axis.set_xlabel("x")
+    axis.set_ylabel("y")
+    axis.set_xlim(-0.5, grid_size - 0.5)
+    axis.set_ylim(-0.5, grid_size - 0.5)
+    axis.set_xticks(range(grid_size))
+    axis.set_yticks(range(grid_size))
+    axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
+    axis.set_aspect("equal", adjustable="box")
+
+    if obstacles:
+        obstacle_x, obstacle_y = zip(*obstacles, strict=False)
+        axis.scatter(
+            obstacle_x,
+            obstacle_y,
+            marker="s",
+            color="black",
+            label="Obstacles",
+        )
+
+    if astar_positions:
+        astar_x, astar_y = zip(*astar_positions, strict=False)
+        axis.plot(
+            astar_x,
+            astar_y,
+            color="tab:purple",
+            marker="o",
+            label="A* path",
+        )
+
+    if dqn_positions:
+        dqn_x, dqn_y = zip(*dqn_positions, strict=False)
+        axis.plot(
+            dqn_x,
+            dqn_y,
+            color="tab:blue",
+            marker="x",
+            linestyle="--",
+            label="DQN path",
+        )
+
+    axis.scatter(
+        [start_position[0]],
+        [start_position[1]],
+        marker="o",
+        color="tab:green",
+        s=120,
+        label="Start",
+    )
+    axis.scatter(
+        [goal_position[0]],
+        [goal_position[1]],
+        marker="*",
+        color="tab:red",
+        s=180,
+        label="Goal",
+    )
+    axis.legend(loc="best")
+
+    figure.tight_layout()
+    figure.savefig(saved_path)
+    plt.close(figure)
+    return saved_path
+
+
 def plot_success_rate_bar(
     summary: EvaluationSummary,
     output_path: str | Path,
