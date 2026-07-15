@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from stable_baselines3 import TD3
 
@@ -33,10 +34,27 @@ EVAL_SEED = 42
 TRAINING_COMMAND = "python scripts/train_td3_continuous_dynamic.py"
 
 
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    """Parse TD3 continuous dynamic evaluation arguments."""
+    parser = argparse.ArgumentParser(
+        description="Evaluate a trained TD3 model on ContinuousDynamicUAVEnv.",
+    )
+    parser.add_argument("--env-config", type=Path, default=ENV_CONFIG_PATH)
+    parser.add_argument("--training-config", type=Path, default=TRAINING_CONFIG_PATH)
+    parser.add_argument("--plots-dir", type=Path, default=PLOTS_DIR)
+    parser.add_argument("--episodes", type=int, default=NUM_EVAL_EPISODES)
+    parser.add_argument("--seed", type=int, default=EVAL_SEED)
+    return parser.parse_args(argv)
+
+
 def main() -> None:
     """Run deterministic evaluation for the trained TD3 baseline."""
-    env = create_continuous_dynamic_uav_env_from_config(ENV_CONFIG_PATH)
-    training_config = load_config(TRAINING_CONFIG_PATH)
+    args = parse_args()
+    if args.episodes < 1:
+        raise ValueError("episodes must be at least 1")
+
+    env = create_continuous_dynamic_uav_env_from_config(args.env_config)
+    training_config = load_config(args.training_config)
     model_output_path = Path(training_config["model_output_path"])
     if not model_output_path.exists():
         raise FileNotFoundError(
@@ -51,8 +69,8 @@ def main() -> None:
     rollouts: list[Rollout] = []
     timeout_count = 0
 
-    for episode_index in range(NUM_EVAL_EPISODES):
-        observation, _ = env.reset(seed=EVAL_SEED + episode_index)
+    for episode_index in range(args.episodes):
+        observation, _ = env.reset(seed=args.seed + episode_index)
         uav_positions = [env.uav_position]
         dynamic_obstacle_positions = [_dynamic_obstacle_positions(env)]
         start_position = env.uav_position
@@ -117,39 +135,39 @@ def main() -> None:
     plot_paths = [
         _plot_continuous_rollout(
             selected_fastest_rollout,
-            PLOTS_DIR / "trajectory.png",
+            args.plots_dir / "trajectory.png",
         ),
         _plot_continuous_rollout(
             selected_mean_length_rollout,
-            PLOTS_DIR / "trajectory_mean_length.png",
+            args.plots_dir / "trajectory_mean_length.png",
         ),
         _plot_continuous_rollout(
             selected_longest_rollout,
-            PLOTS_DIR / "trajectory_longest.png",
+            args.plots_dir / "trajectory_longest.png",
         ),
         _animate_continuous_rollout(
             selected_fastest_rollout,
-            PLOTS_DIR / "trajectory.gif",
+            args.plots_dir / "trajectory.gif",
         ),
         _animate_continuous_rollout(
             selected_mean_length_rollout,
-            PLOTS_DIR / "trajectory_mean_length.gif",
+            args.plots_dir / "trajectory_mean_length.gif",
         ),
         _animate_continuous_rollout(
             selected_longest_rollout,
-            PLOTS_DIR / "trajectory_longest.gif",
+            args.plots_dir / "trajectory_longest.gif",
         ),
         plot_reward_curve(
             episode_rewards=episode_rewards,
-            output_path=PLOTS_DIR / "reward_curve.png",
+            output_path=args.plots_dir / "reward_curve.png",
         ),
         plot_success_rate_bar(
             summary=summary,
-            output_path=PLOTS_DIR / "success_rate.png",
+            output_path=args.plots_dir / "success_rate.png",
         ),
         plot_collision_rate_bar(
             summary=summary,
-            output_path=PLOTS_DIR / "collision_rate.png",
+            output_path=args.plots_dir / "collision_rate.png",
         ),
     ]
 
