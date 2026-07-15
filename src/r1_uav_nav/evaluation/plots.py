@@ -96,6 +96,27 @@ def plot_reward_curve(
     return saved_path
 
 
+def plot_path_length_curve(
+    path_lengths: Sequence[float],
+    output_path: str | Path,
+) -> Path:
+    """Plot planned path length for each evaluation episode."""
+    saved_path = _prepare_output_path(output_path)
+    figure, axis = plt.subplots(figsize=(8, 5))
+    episode_numbers = range(1, len(path_lengths) + 1)
+
+    axis.plot(episode_numbers, path_lengths, marker="o", color="tab:purple")
+    axis.set_title("A* path length by episode, failed plans shown as 0")
+    axis.set_xlabel("Episode")
+    axis.set_ylabel("Path length")
+    axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
+
+    figure.tight_layout()
+    figure.savefig(saved_path)
+    plt.close(figure)
+    return saved_path
+
+
 def plot_success_rate_bar(
     summary: EvaluationSummary,
     output_path: str | Path,
@@ -108,6 +129,21 @@ def plot_success_rate_bar(
         bar_label="Success",
         output_path=output_path,
         color="tab:green",
+    )
+
+
+def plot_failure_rate_bar(
+    failure_rate: float,
+    output_path: str | Path,
+) -> Path:
+    """Plot a planner failure rate."""
+    return _plot_rate_bar(
+        rate=failure_rate,
+        title="Planner failure rate",
+        ylabel="Failure rate",
+        bar_label="Failure",
+        output_path=output_path,
+        color="tab:orange",
     )
 
 

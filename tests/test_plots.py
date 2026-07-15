@@ -5,6 +5,8 @@ from r1_uav_nav.evaluation import (
     plot_collision_rate_bar,
     plot_dynamic_trajectory_gif,
     plot_dynamic_trajectory_png,
+    plot_failure_rate_bar,
+    plot_path_length_curve,
     plot_reward_curve,
     plot_success_rate_bar,
     plot_trajectory,
@@ -39,6 +41,18 @@ def test_plot_reward_curve_creates_non_empty_png(tmp_path: Path) -> None:
     assert output_path.stat().st_size > 0
 
 
+def test_plot_path_length_curve_creates_non_empty_png(tmp_path: Path) -> None:
+    output_path = tmp_path / "path_length_curve.png"
+
+    plot_path_length_curve(
+        path_lengths=[4.0, 0.0, 6.0],
+        output_path=output_path,
+    )
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
 def test_plot_success_rate_bar_creates_non_empty_png(tmp_path: Path) -> None:
     output_path = tmp_path / "success_rate.png"
 
@@ -56,6 +70,18 @@ def test_plot_collision_rate_bar_creates_non_empty_png(tmp_path: Path) -> None:
 
     plot_collision_rate_bar(
         summary=_evaluation_summary(),
+        output_path=output_path,
+    )
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
+def test_plot_failure_rate_bar_creates_non_empty_png(tmp_path: Path) -> None:
+    output_path = tmp_path / "failure_rate.png"
+
+    plot_failure_rate_bar(
+        failure_rate=0.25,
         output_path=output_path,
     )
 
