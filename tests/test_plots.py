@@ -3,6 +3,8 @@ from pathlib import Path
 from r1_uav_nav.evaluation import (
     EvaluationSummary,
     plot_collision_rate_bar,
+    plot_continuous_dynamic_trajectory_gif,
+    plot_continuous_dynamic_trajectory_png,
     plot_dynamic_trajectory_gif,
     plot_dynamic_trajectory_png,
     plot_failure_rate_bar,
@@ -156,6 +158,51 @@ def test_plot_dynamic_trajectory_gif_creates_non_empty_gif(tmp_path: Path) -> No
         start_position=(0, 0),
         goal_position=(4, 4),
         grid_size=5,
+        output_path=output_path,
+        fps=2,
+    )
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
+def test_plot_continuous_dynamic_trajectory_png_creates_non_empty_png(
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "continuous_dynamic_trajectory.png"
+
+    plot_continuous_dynamic_trajectory_png(
+        uav_positions=[(0.0, 0.0), (0.5, 0.2), (1.0, 0.5)],
+        dynamic_obstacle_positions=[
+            [(4.0, 4.0), (1.0, 1.0)],
+            [(3.8, 4.0), (1.0, 1.2)],
+            [(3.6, 4.0), (1.0, 1.4)],
+        ],
+        start_position=(0.0, 0.0),
+        goal_position=(5.0, 5.0),
+        world_size=5.0,
+        output_path=output_path,
+    )
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
+def test_plot_continuous_dynamic_trajectory_gif_creates_non_empty_gif(
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "continuous_dynamic_trajectory.gif"
+
+    plot_continuous_dynamic_trajectory_gif(
+        uav_positions=[(0.0, 0.0), (0.5, 0.2), (1.0, 0.5)],
+        dynamic_obstacle_positions=[
+            [(4.0, 4.0), (1.0, 1.0)],
+            [(3.8, 4.0), (1.0, 1.2)],
+            [(3.6, 4.0), (1.0, 1.4)],
+        ],
+        start_position=(0.0, 0.0),
+        goal_position=(5.0, 5.0),
+        world_size=5.0,
         output_path=output_path,
         fps=2,
     )

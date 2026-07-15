@@ -338,6 +338,78 @@ def plot_dynamic_trajectory_gif(
     return saved_path
 
 
+def plot_continuous_dynamic_trajectory_png(
+    uav_positions: Sequence[tuple[float, float]],
+    dynamic_obstacle_positions: Sequence[Sequence[tuple[float, float]]],
+    start_position: tuple[float, float],
+    goal_position: tuple[float, float],
+    world_size: float,
+    output_path: str | Path,
+    collision_step: int | None = None,
+) -> Path:
+    """Plot a continuous dynamic UAV rollout with obstacle trails."""
+    saved_path = _prepare_output_path(output_path)
+    figure, axis = plt.subplots(figsize=(7, 7))
+    _setup_continuous_axis(axis, world_size, "Continuous dynamic UAV trajectory")
+
+    _plot_continuous_dynamic_rollout_frame(
+        axis=axis,
+        uav_positions=uav_positions,
+        dynamic_obstacle_positions=dynamic_obstacle_positions,
+        start_position=start_position,
+        goal_position=goal_position,
+        frame_index=len(uav_positions) - 1,
+        collision_step=collision_step,
+        show_trails=True,
+    )
+
+    figure.tight_layout()
+    figure.savefig(saved_path)
+    plt.close(figure)
+    return saved_path
+
+
+def plot_continuous_dynamic_trajectory_gif(
+    uav_positions: Sequence[tuple[float, float]],
+    dynamic_obstacle_positions: Sequence[Sequence[tuple[float, float]]],
+    start_position: tuple[float, float],
+    goal_position: tuple[float, float],
+    world_size: float,
+    output_path: str | Path,
+    collision_step: int | None = None,
+    fps: int = 2,
+) -> Path:
+    """Animate a continuous dynamic UAV rollout as a GIF."""
+    saved_path = _prepare_output_path(output_path)
+    figure, axis = plt.subplots(figsize=(7, 7))
+    frame_count = max(len(uav_positions), len(dynamic_obstacle_positions), 1)
+
+    def update(frame_index: int) -> None:
+        axis.clear()
+        _setup_continuous_axis(axis, world_size, "Continuous dynamic UAV trajectory")
+        _plot_continuous_dynamic_rollout_frame(
+            axis=axis,
+            uav_positions=uav_positions,
+            dynamic_obstacle_positions=dynamic_obstacle_positions,
+            start_position=start_position,
+            goal_position=goal_position,
+            frame_index=frame_index,
+            collision_step=collision_step,
+            show_trails=False,
+        )
+
+    rollout_animation = animation.FuncAnimation(
+        figure,
+        update,
+        frames=frame_count,
+        interval=1000 // fps,
+        repeat=False,
+    )
+    rollout_animation.save(saved_path, writer=animation.PillowWriter(fps=fps))
+    plt.close(figure)
+    return saved_path
+
+
 def _plot_rate_bar(
     rate: float,
     title: str,
@@ -374,6 +446,20 @@ def _setup_grid_axis(axis: plt.Axes, grid_size: int, title: str) -> None:
     axis.set_ylim(-0.5, grid_size - 0.5)
     axis.set_xticks(range(grid_size))
     axis.set_yticks(range(grid_size))
+    axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
+    axis.set_aspect("equal", adjustable="box")
+
+
+def _setup_continuous_axis(
+    axis: plt.Axes,
+    world_size: float,
+    title: str,
+) -> None:
+    axis.set_title(title)
+    axis.set_xlabel("x")
+    axis.set_ylabel("y")
+    axis.set_xlim(0.0, world_size)
+    axis.set_ylim(0.0, world_size)
     axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
     axis.set_aspect("equal", adjustable="box")
 
@@ -443,6 +529,69 @@ def _plot_dynamic_rollout_frame(
     axis.legend(loc="best")
 
 
+def _plot_continuous_dynamic_rollout_frame(
+    axis: plt.Axes,
+    uav_positions: Sequence[tuple[float, float]],
+    dynamic_obstacle_positions: Sequence[Sequence[tuple[float, float]]],
+    start_position: tuple[float, float],
+    goal_position: tuple[float, float],
+    frame_index: int,
+    collision_step: int | None,
+    show_trails: bool,
+) -> None:
+    max_uav_index = min(frame_index, len(uav_positions) - 1)
+    uav_positions_to_plot = uav_positions[: max_uav_index + 1]
+    obstacle_positions = _positions_at_frame(dynamic_obstacle_positions, frame_index)
+
+    axis.scatter(
+        [start_position[0]],
+        [start_position[1]],
+        marker="o",
+        color="tab:green",
+        s=120,
+        label="Start",
+    )
+    axis.scatter(
+        [goal_position[0]],
+        [goal_position[1]],
+        marker="*",
+        color="tab:red",
+        s=180,
+        label="Goal",
+    )
+
+    if show_trails:
+        _plot_continuous_dynamic_obstacle_trails(axis, dynamic_obstacle_positions)
+
+    if obstacle_positions:
+        obstacle_x, obstacle_y = zip(*obstacle_positions, strict=False)
+        axis.scatter(
+            obstacle_x,
+            obstacle_y,
+            marker="s",
+            color="black",
+            label="Dynamic obstacles",
+        )
+
+    if uav_positions_to_plot:
+        path_x, path_y = zip(*uav_positions_to_plot, strict=False)
+        axis.plot(path_x, path_y, color="tab:blue", marker="o", label="UAV path")
+
+    if collision_step is not None and frame_index >= collision_step:
+        collision_position = uav_positions[min(collision_step, len(uav_positions) - 1)]
+        axis.scatter(
+            [collision_position[0]],
+            [collision_position[1]],
+            marker="x",
+            color="tab:red",
+            s=200,
+            linewidths=3,
+            label="Collision",
+        )
+
+    axis.legend(loc="best")
+
+
 def _plot_dynamic_obstacle_trails(
     axis: plt.Axes,
     dynamic_obstacle_positions: Sequence[Sequence[Position]],
@@ -469,6 +618,18 @@ def _plot_dynamic_obstacle_trails(
                     length_includes_head=True,
                     zorder=5,
                 )
+
+
+def _plot_continuous_dynamic_obstacle_trails(
+    axis: plt.Axes,
+    dynamic_obstacle_positions: Sequence[Sequence[tuple[float, float]]],
+) -> None:
+    trails = _get_dynamic_obstacle_trails(dynamic_obstacle_positions)
+    for trail in trails:
+        if not trail:
+            continue
+        trail_x, trail_y = zip(*trail, strict=False)
+        axis.plot(trail_x, trail_y, color="gray", alpha=0.5, linestyle=":")
 
 
 def _get_dynamic_obstacle_trails(

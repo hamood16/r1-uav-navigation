@@ -8,6 +8,8 @@ from r1_uav_nav.evaluation.metrics import (
 )
 from r1_uav_nav.evaluation.plots import (
     plot_collision_rate_bar,
+    plot_continuous_dynamic_trajectory_gif,
+    plot_continuous_dynamic_trajectory_png,
     plot_dynamic_trajectory_gif,
     plot_dynamic_trajectory_png,
     plot_failure_rate_bar,
@@ -24,6 +26,8 @@ __all__ = [
     "EvaluationSummary",
     "calculate_path_length",
     "plot_collision_rate_bar",
+    "plot_continuous_dynamic_trajectory_gif",
+    "plot_continuous_dynamic_trajectory_png",
     "plot_dynamic_trajectory_gif",
     "plot_dynamic_trajectory_png",
     "plot_failure_rate_bar",
