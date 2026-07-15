@@ -35,6 +35,7 @@ results/logs/*
 results/trained_models/*
 results/videos/*
 results/plots/*
+results/reports/*
 
 # Keep folder structure
 !results/logs/.gitkeep
