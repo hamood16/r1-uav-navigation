@@ -7,10 +7,11 @@ from typing import Any
 
 import yaml
 
-from r1_uav_nav.envs import DynamicGridUAVEnv, GridUAVEnv
+from r1_uav_nav.envs import ContinuousDynamicUAVEnv, DynamicGridUAVEnv, GridUAVEnv
 
 _GRID_UAV_ENV_NAME = "GridUAVEnv"
 _DYNAMIC_GRID_UAV_ENV_NAME = "DynamicGridUAVEnv"
+_CONTINUOUS_DYNAMIC_UAV_ENV_NAME = "ContinuousDynamicUAVEnv"
 _GRID_UAV_ENV_REQUIRED_KEYS = (
     "grid_size",
     "max_steps",
@@ -38,6 +39,24 @@ _DYNAMIC_GRID_UAV_ENV_REQUIRED_KEYS = (
 _DYNAMIC_GRID_UAV_ENV_OPTIONAL_KEYS = (
     "step_penalty",
     "hover_penalty",
+    "boundary_penalty",
+    "collision_penalty",
+    "goal_reward",
+    "timeout_penalty",
+    "progress_reward_scale",
+)
+_CONTINUOUS_DYNAMIC_UAV_ENV_REQUIRED_KEYS = (
+    "world_size",
+    "max_steps",
+    "num_dynamic_obstacles",
+    "max_uav_speed",
+    "obstacle_speed",
+    "dt",
+    "collision_radius",
+    "goal_radius",
+    "random_start",
+    "random_goal",
+    "step_penalty",
     "boundary_penalty",
     "collision_penalty",
     "goal_reward",
@@ -128,3 +147,29 @@ def create_dynamic_grid_uav_env_from_config(path: str | Path) -> DynamicGridUAVE
     )
 
     return DynamicGridUAVEnv(**env_kwargs)
+
+
+def create_continuous_dynamic_uav_env_from_config(
+    path: str | Path,
+) -> ContinuousDynamicUAVEnv:
+    """Create a ContinuousDynamicUAVEnv from a YAML configuration file."""
+    config = load_config(path)
+
+    env_name = config.get("env_name")
+    if env_name != _CONTINUOUS_DYNAMIC_UAV_ENV_NAME:
+        raise ValueError(
+            f"Expected env_name to be {_CONTINUOUS_DYNAMIC_UAV_ENV_NAME!r}, got "
+            f"{env_name!r}"
+        )
+
+    missing_keys = [
+        key for key in _CONTINUOUS_DYNAMIC_UAV_ENV_REQUIRED_KEYS if key not in config
+    ]
+    if missing_keys:
+        raise ValueError(
+            "Missing required ContinuousDynamicUAVEnv config keys: "
+            + ", ".join(missing_keys)
+        )
+
+    env_kwargs = {key: config[key] for key in _CONTINUOUS_DYNAMIC_UAV_ENV_REQUIRED_KEYS}
+    return ContinuousDynamicUAVEnv(**env_kwargs)
