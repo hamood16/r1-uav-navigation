@@ -34,6 +34,11 @@ The project will start with a simple 2D Gymnasium environment and later extend i
 - Unreal Engine later
 - AirSim / Colosseum / Cosys-AirSim later
 
+## Results and Documentation
+
+- [M10 dynamic RL results summary](docs/m10_dynamic_rl_results.md)
+- [DQN vs TD3 dynamic navigation comparison](docs/results/dqn_vs_td3_dynamic.md)
+
 ## Project Structure
 
 ```text
