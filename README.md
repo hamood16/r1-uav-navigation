@@ -38,6 +38,7 @@ The project will start with a simple 2D Gymnasium environment and later extend i
 
 - [M10 dynamic RL results summary](docs/m10_dynamic_rl_results.md)
 - [DQN vs TD3 dynamic navigation comparison](docs/results/dqn_vs_td3_dynamic.md)
+- [M12 simulator stack decision](docs/m12_simulator_stack_decision.md)
 
 ## Project Structure
 
