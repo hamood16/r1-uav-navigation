@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+from dataclasses import dataclass, replace
 from types import ModuleType
 from typing import Any
 
@@ -15,6 +16,26 @@ class ColosseumClientError(RuntimeError):
 
 class ColosseumClientImportError(ColosseumClientError):
     """Raised when the Colosseum/AirSim-style Python client cannot be imported."""
+
+
+@dataclass(frozen=True)
+class CleanupState:
+    """Track which simulator-control stages have been reached."""
+
+    api_control_enabled: bool = False
+    armed: bool = False
+    takeoff_attempted: bool = False
+    airborne: bool = False
+
+
+@dataclass(frozen=True)
+class CleanupResult:
+    """Summary of cleanup actions after simulator-control commands."""
+
+    actions_attempted: tuple[str, ...]
+    actions_succeeded: tuple[str, ...]
+    errors: tuple[str, ...]
+    safety_critical_failure: bool
 
 
 def import_colosseum_client_module(
@@ -95,18 +116,21 @@ def perform_basic_control_check(
     _require_positive("velocity", velocity)
 
     actions: list[str] = []
-    cleanup_required = False
+    cleanup_state = CleanupState()
 
     try:
         _call_client_method(client, "enableApiControl", True)
         actions.append("enabled API control")
-        cleanup_required = True
+        cleanup_state = replace(cleanup_state, api_control_enabled=True)
 
         _call_client_method(client, "armDisarm", True)
         actions.append("armed drone")
+        cleanup_state = replace(cleanup_state, armed=True)
 
+        cleanup_state = replace(cleanup_state, takeoff_attempted=True)
         _wait_for_async_result(_call_client_method(client, "takeoffAsync"))
         actions.append("completed takeoff")
+        cleanup_state = replace(cleanup_state, airborne=True)
 
         if move_demo:
             _wait_for_async_result(
@@ -121,10 +145,71 @@ def perform_basic_control_check(
             )
             actions.append("completed forward velocity demo")
     finally:
-        if cleanup_required:
-            actions.extend(_cleanup_after_control(client))
+        cleanup_result = cleanup_after_control(client, cleanup_state)
+        actions.extend(cleanup_result.actions_succeeded)
 
     return actions
+
+
+def cleanup_after_control(client: Any, cleanup_state: CleanupState) -> CleanupResult:
+    """Attempt state-aware simulator cleanup without raising cleanup errors."""
+    actions_attempted: list[str] = []
+    actions_succeeded: list[str] = []
+    errors: list[str] = []
+    safety_critical_failure = False
+
+    if cleanup_state.takeoff_attempted or cleanup_state.airborne:
+        _record_cleanup_attempt(
+            client=client,
+            method_name="hoverAsync",
+            success_action="completed hover",
+            actions_attempted=actions_attempted,
+            actions_succeeded=actions_succeeded,
+            errors=errors,
+            is_async=True,
+            safety_critical=False,
+        )
+        safety_critical_failure |= _record_cleanup_attempt(
+            client=client,
+            method_name="landAsync",
+            success_action="completed landing",
+            actions_attempted=actions_attempted,
+            actions_succeeded=actions_succeeded,
+            errors=errors,
+            is_async=True,
+            safety_critical=True,
+        )
+    if cleanup_state.armed:
+        safety_critical_failure |= _record_cleanup_attempt(
+            client=client,
+            method_name="armDisarm",
+            success_action="disarmed drone",
+            actions_attempted=actions_attempted,
+            actions_succeeded=actions_succeeded,
+            errors=errors,
+            is_async=False,
+            safety_critical=True,
+            args=(False,),
+        )
+    if cleanup_state.api_control_enabled:
+        safety_critical_failure |= _record_cleanup_attempt(
+            client=client,
+            method_name="enableApiControl",
+            success_action="disabled API control",
+            actions_attempted=actions_attempted,
+            actions_succeeded=actions_succeeded,
+            errors=errors,
+            is_async=False,
+            safety_critical=True,
+            args=(False,),
+        )
+
+    return CleanupResult(
+        actions_attempted=tuple(actions_attempted),
+        actions_succeeded=tuple(actions_succeeded),
+        errors=tuple(errors),
+        safety_critical_failure=safety_critical_failure,
+    )
 
 
 def _format_vector(vector: Any) -> str:
@@ -164,45 +249,62 @@ def _wait_for_async_result(async_result: Any) -> None:
     join_method()
 
 
-def _cleanup_after_control(client: Any) -> list[str]:
-    actions: list[str] = []
+def _record_cleanup_attempt(
+    *,
+    client: Any,
+    method_name: str,
+    success_action: str,
+    actions_attempted: list[str],
+    actions_succeeded: list[str],
+    errors: list[str],
+    is_async: bool,
+    safety_critical: bool,
+    args: tuple[Any, ...] = (),
+) -> bool:
+    actions_attempted.append(method_name)
+    if is_async:
+        success, error = _call_optional_async_cleanup(client, method_name)
+    else:
+        success, error = _call_optional_cleanup(client, method_name, *args)
 
-    if _call_optional_async_cleanup(client, "hoverAsync"):
-        actions.append("completed hover")
-    if _call_optional_async_cleanup(client, "landAsync"):
-        actions.append("completed landing")
-    if _call_optional_cleanup(client, "armDisarm", False):
-        actions.append("disarmed drone")
-    if _call_optional_cleanup(client, "enableApiControl", False):
-        actions.append("disabled API control")
-
-    return actions
+    if success:
+        actions_succeeded.append(success_action)
+        return False
+    if error is not None:
+        errors.append(error)
+        return safety_critical
+    return False
 
 
-def _call_optional_async_cleanup(client: Any, method_name: str) -> bool:
+def _call_optional_async_cleanup(
+    client: Any,
+    method_name: str,
+) -> tuple[bool, str | None]:
     method = getattr(client, method_name, None)
     if method is None:
-        return False
+        return False, None
 
     try:
         _wait_for_async_result(method())
-    except Exception:
-        return False
+    except Exception as exc:
+        return False, f"{method_name} failed during cleanup: {exc}"
 
-    return True
+    return True, None
 
 
-def _call_optional_cleanup(client: Any, method_name: str, *args: Any) -> bool:
+def _call_optional_cleanup(
+    client: Any, method_name: str, *args: Any
+) -> tuple[bool, str | None]:
     method = getattr(client, method_name, None)
     if method is None:
-        return False
+        return False, None
 
     try:
         method(*args)
-    except Exception:
-        return False
+    except Exception as exc:
+        return False, f"{method_name} failed during cleanup: {exc}"
 
-    return True
+    return True, None
 
 
 def _require_positive(name: str, value: float) -> None:
