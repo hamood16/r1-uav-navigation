@@ -40,6 +40,7 @@ The project will start with a simple 2D Gymnasium environment and later extend i
 - [DQN vs TD3 dynamic navigation comparison](docs/results/dqn_vs_td3_dynamic.md)
 - [M12 simulator stack decision](docs/m12_simulator_stack_decision.md)
 - [M12 Colosseum setup and connection check](docs/m12_colosseum_setup.md)
+- [M12 Colosseum waypoint navigation demo](docs/m12_colosseum_navigation_demo.md)
 
 ## Project Structure
 
