@@ -41,6 +41,7 @@ The project will start with a simple 2D Gymnasium environment and later extend i
 - [M12 simulator stack decision](docs/m12_simulator_stack_decision.md)
 - [M12 Colosseum setup and connection check](docs/m12_colosseum_setup.md)
 - [M12 Colosseum waypoint navigation demo](docs/m12_colosseum_navigation_demo.md)
+- [M12 Colosseum Gymnasium wrapper](docs/m12_colosseum_gym_wrapper.md)
 
 ## Project Structure
 
