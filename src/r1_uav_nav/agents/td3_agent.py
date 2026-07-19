@@ -20,11 +20,24 @@ def create_td3_model(
         raise ValueError(f"Expected algorithm to be 'TD3', got {algorithm!r}")
 
     n_actions = env.action_space.shape[-1]
-    action_noise_std = training_config["action_noise_std"]
+    action_noise_std = np.asarray(training_config["action_noise_std"], dtype=float)
+    if action_noise_std.ndim == 0:
+        action_noise_std = action_noise_std * np.ones(n_actions)
+    if action_noise_std.shape != (n_actions,):
+        raise ValueError(
+            "action_noise_std must be a scalar or have one value per action "
+            f"dimension; got shape {action_noise_std.shape}"
+        )
     action_noise = NormalActionNoise(
         mean=np.zeros(n_actions),
-        sigma=action_noise_std * np.ones(n_actions),
+        sigma=action_noise_std,
     )
+
+    model_kwargs: dict[str, Any] = {}
+    if "policy_kwargs" in training_config:
+        model_kwargs["policy_kwargs"] = training_config["policy_kwargs"]
+    if "replay_buffer_kwargs" in training_config:
+        model_kwargs["replay_buffer_kwargs"] = training_config["replay_buffer_kwargs"]
 
     return TD3(
         policy=training_config["policy"],
@@ -45,4 +58,5 @@ def create_td3_model(
         verbose=training_config["verbose"],
         device=training_config["device"],
         tensorboard_log=tensorboard_log,
+        **model_kwargs,
     )

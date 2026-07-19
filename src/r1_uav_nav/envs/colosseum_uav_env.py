@@ -102,6 +102,7 @@ class ColosseumUAVEnv(gym.Env[np.ndarray, np.ndarray]):
 
         self.cleanup_state = CleanupState()
         self.last_cleanup_result: CleanupResult | None = None
+        self.cleanup_safety_critical_failure_seen = False
         self.last_terminal_safety_error: str | None = None
         self.ground_reference_z: float | None = None
         self.anchor_position: Position3D | None = None
@@ -167,14 +168,13 @@ class ColosseumUAVEnv(gym.Env[np.ndarray, np.ndarray]):
                 termination_reason=_TERMINATION_NONE,
             )
         except Exception:
-            self.last_cleanup_result = (
-                cleanup_after_control(
-                    self.client,
-                    self.cleanup_state,
+            if self.client is not None:
+                self._record_cleanup_result(
+                    cleanup_after_control(
+                        self.client,
+                        self.cleanup_state,
+                    )
                 )
-                if self.client is not None
-                else None
-            )
             self.cleanup_state = CleanupState()
             raise
 
@@ -242,10 +242,7 @@ class ColosseumUAVEnv(gym.Env[np.ndarray, np.ndarray]):
                 self.client,
                 self.cleanup_state,
             )
-            self.last_cleanup_result = _merge_cleanup_results(
-                self.last_cleanup_result,
-                cleanup_result,
-            )
+            self._record_cleanup_result(cleanup_result)
         self.cleanup_state = CleanupState()
         self.closed = True
         return self.last_cleanup_result
@@ -292,11 +289,21 @@ class ColosseumUAVEnv(gym.Env[np.ndarray, np.ndarray]):
 
     def _cleanup_previous_episode(self) -> None:
         if self.client is not None:
-            self.last_cleanup_result = cleanup_after_control(
-                self.client,
-                self.cleanup_state,
+            self._record_cleanup_result(
+                cleanup_after_control(
+                    self.client,
+                    self.cleanup_state,
+                )
             )
             self.cleanup_state = CleanupState()
+
+    def _record_cleanup_result(self, cleanup_result: CleanupResult) -> None:
+        self.last_cleanup_result = _merge_cleanup_results(
+            self.last_cleanup_result,
+            cleanup_result,
+        )
+        if cleanup_result.safety_critical_failure:
+            self.cleanup_safety_critical_failure_seen = True
 
     def _reset_episode_bookkeeping(self) -> None:
         self.cleanup_state = CleanupState()
