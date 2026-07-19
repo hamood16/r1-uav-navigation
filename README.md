@@ -42,6 +42,7 @@ The project will start with a simple 2D Gymnasium environment and later extend i
 - [M12 Colosseum setup and connection check](docs/m12_colosseum_setup.md)
 - [M12 Colosseum waypoint navigation demo](docs/m12_colosseum_navigation_demo.md)
 - [M12 Colosseum Gymnasium wrapper](docs/m12_colosseum_gym_wrapper.md)
+- [M12 Colosseum TD3 baseline](docs/m12_colosseum_td3_baseline.md)
 
 ## Project Structure
 
