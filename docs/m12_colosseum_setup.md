@@ -31,7 +31,7 @@ environment are not committed to this repository.
 
    ```powershell
    git clone https://github.com/CodexLabsLLC/Colosseum.git C:\Colosseum
-   cd C:\Colosseum
+   cd C:\path\to\Colosseum
    git fetch --tags
    git checkout v2.0.0-beta
    git rev-parse --short HEAD
@@ -42,7 +42,7 @@ environment are not committed to this repository.
 3. Activate the project Python virtual environment:
 
    ```powershell
-   cd C:\Hamdhan\Projects\r1-UAV-navigation
+   cd <REPOSITORY ROOT>
    .\.venv\Scripts\Activate.ps1
    ```
 
@@ -83,7 +83,7 @@ For the validated Blocks setup, keep the simulator binary and Python client alig
 
 - Blocks simulator: Colosseum `v2.0.0-beta`
 - Colosseum repository: tag `v2.0.0-beta`, commit `7b9658a1`
-- Python client: editable install from `C:\Colosseum\PythonClient`
+- Python client: editable install from `C:\path\to\Colosseum\PythonClient`
 
 `msgpack-rpc-python==0.4.1` is incompatible with `msgpack` 1.x because it passes the
 removed `encoding` argument. Use `msgpack==0.6.2` for the validated setup.

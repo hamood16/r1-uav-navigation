@@ -1,8 +1,6 @@
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 *.egg-info/
 .eggs/
 dist/
@@ -12,8 +10,6 @@ build/
 .venv/
 venv/
 /env/
-venv/
-.venv/
 
 # VSCode
 .vscode/
@@ -60,3 +56,40 @@ Saved/
 *.VC.db
 *.opensdf
 *.opendb
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Private keys and signing material
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Common cloud and application credentials
+service-account*.json
+*service_account*.json
+application_default_credentials.json
+credentials.json
+token.json
+secrets.json
+
+# Local authentication configuration
+.netrc
+.pypirc
+.npmrc
+
+# Cloud CLI credential directories accidentally copied into the project
+.aws/
+.azure/
+.gcloud/
