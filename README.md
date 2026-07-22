@@ -1,28 +1,72 @@
-# Cleaner UAV
+# r1-UAV-navigation
 
-A reinforcement learning and robotics simulation project for autonomous UAV path planning and navigation in dynamic environments.
+Autonomous UAV path planning and navigation using reinforcement learning, classical
+planning, and Colosseum/AirSim-compatible 3D simulation.
 
 ## Project Goal
 
-The aim of this project is to build a modular UAV autonomy system that can learn to navigate through environments using reinforcement learning algorithms such as DQN, DDPG, TD3, and SAC.
+This repository builds a modular UAV navigation stack that progresses from small
+2D Gymnasium environments to live 3D simulator control. It is designed to make each
+stage testable and reproducible before adding more realism.
 
-The project will start with a simple 2D Gymnasium environment and later extend into 3D simulation using Unreal Engine and an AirSim-compatible UAV simulator.
+The current project demonstrates:
 
-## Planned Features
+- 2D static and dynamic UAV navigation environments.
+- DQN baselines for discrete grid navigation.
+- TD3 baselines for continuous 2D and Colosseum 3D control.
+- A* planning and static DQN-vs-A* comparison.
+- Repeated evaluation summaries and comparison plotting.
+- Colosseum Blocks connection, state reads, takeoff, movement, landing, and safe
+  cleanup.
+- Scripted 3D waypoint navigation.
+- A Gymnasium-compatible Colosseum UAV wrapper.
+- A live-validated TD3 training, checkpointing, evaluation, and cleanup pipeline
+  for a simple fixed, obstacle-free 3D goal task.
 
-- Custom 2D UAV navigation environment
-- Reinforcement learning agents
-- DQN baseline
-- Dynamic obstacle avoidance
-- Evaluation metrics
-- Training and evaluation scripts
-- Unreal Engine simulation extension
-- Clean software engineering structure
-- Unit tests and reproducible experiments
+## Current M12 Baseline
+
+The completed M12 Colosseum baseline uses `ColosseumUAVEnv` with a normalized
+continuous 3D action space and a 10-value state-vector observation. The M12.5 TD3
+baseline trains toward a fixed forward goal offset of `(3.0, 0.0, 0.0)` with no
+obstacles.
+
+The strongest documented M12.5 result is the 2,000-step TD3 Stage B run:
+
+- evaluation episodes: 5
+- success rate: 100%
+- mean return: 12.305
+- mean final distance: 0.459 m
+
+This result validates the live simulator training pipeline for a simple fixed-goal
+task. It does not demonstrate random-goal generalisation, obstacle avoidance,
+LiDAR perception, or real-world readiness.
+
+## Implemented Algorithms
+
+- DQN: implemented through Stable-Baselines3 for discrete grid navigation.
+- TD3: implemented through Stable-Baselines3 for continuous navigation.
+- A*: implemented as a classical static-grid planning baseline.
+
+DDPG, SAC, PPO, and other algorithms are future options only; they are not
+implemented in the current repository.
+
+## Current Limitations And M13 Direction
+
+M13 will move toward obstacle-aware 3D navigation. The current repository does not
+yet include:
+
+- LiDAR observations.
+- Camera or depth perception.
+- scene-object spawning or procedural obstacle courses.
+- visible start/goal pads.
+- obstacle-aware Colosseum Gymnasium environments.
+- 3D obstacle-aware A* planning.
+- curriculum training or replay-buffer resume.
+- dynamic obstacle avoidance in Colosseum.
 
 ## Tech Stack
 
-- Python
+- Python 3.11
 - PyTorch
 - Gymnasium
 - Stable-Baselines3
@@ -31,10 +75,10 @@ The project will start with a simple 2D Gymnasium environment and later extend i
 - PyYAML
 - pytest
 - Ruff
-- Unreal Engine later
-- AirSim / Colosseum / Cosys-AirSim later
+- Black
+- Colosseum Blocks v2.0.0-beta for live 3D simulator validation
 
-## Results and Documentation
+## Results And Documentation
 
 - [M10 dynamic RL results summary](docs/m10_dynamic_rl_results.md)
 - [DQN vs TD3 dynamic navigation comparison](docs/results/dqn_vs_td3_dynamic.md)
@@ -43,14 +87,35 @@ The project will start with a simple 2D Gymnasium environment and later extend i
 - [M12 Colosseum waypoint navigation demo](docs/m12_colosseum_navigation_demo.md)
 - [M12 Colosseum Gymnasium wrapper](docs/m12_colosseum_gym_wrapper.md)
 - [M12 Colosseum TD3 baseline](docs/m12_colosseum_td3_baseline.md)
+- [M13.0 baseline reproducibility freeze](docs/m13_0_baseline_reproducibility.md)
 
 ## Project Structure
 
 ```text
-Cleaner_UAV/
-├── configs/
-├── docs/
-├── results/
-├── scripts/
-├── src/
-└── tests/
+r1-UAV-navigation/
+|-- configs/
+|   |-- env/
+|   `-- training/
+|-- docs/
+|   `-- results/
+|-- results/
+|   |-- logs/
+|   |-- plots/
+|   |-- reports/
+|   |-- trained_models/
+|   `-- videos/
+|-- scripts/
+|-- src/
+|   `-- r1_uav_nav/
+|       |-- agents/
+|       |-- envs/
+|       |-- evaluation/
+|       |-- planners/
+|       |-- sim/
+|       |-- training/
+|       `-- utils/
+`-- tests/
+```
+
+Generated models, logs, plots, reports, videos, simulator binaries, and local
+virtual environments are intentionally not committed.
