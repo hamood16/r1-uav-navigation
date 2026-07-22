@@ -1,0 +1,8 @@
+-r requirements.txt
+
+# Colosseum Blocks v2.0.0-beta compatibility:
+# install the matching external Colosseum/AirSim-compatible Python client
+# from the Colosseum repository tag v2.0.0-beta, commit 7b9658a1.
+# Do not replace this note with an editable local path in committed files.
+msgpack==0.6.2
+msgpack-rpc-python==0.4.1

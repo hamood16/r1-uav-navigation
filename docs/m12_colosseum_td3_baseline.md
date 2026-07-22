@@ -217,10 +217,7 @@ The final measured simulator state was:
 API control: False
 Landed state: 0
 Velocity: x=0.0, y=0.0, z=0.0
-
-
-
-
+```
 
 ## Limitations
 
