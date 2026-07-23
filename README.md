@@ -22,6 +22,9 @@ The current project demonstrates:
 - A Gymnasium-compatible Colosseum UAV wrapper.
 - A live-validated TD3 training, checkpointing, evaluation, and cleanup pipeline
   for a simple fixed, obstacle-free 3D goal task.
+- A supervised Colosseum capability probe validating scene surveys, debug markers,
+  temporary-object lifecycle, raw LiDAR access, `SensorLocalFrame` behavior, and
+  bounded RPC performance.
 
 ## Current M12 Baseline
 
@@ -52,17 +55,21 @@ implemented in the current repository.
 
 ## Current Limitations And M13 Direction
 
-M13 will move toward obstacle-aware 3D navigation. The current repository does not
-yet include:
+M13 is moving toward obstacle-aware 3D navigation. M13.1 validates raw LiDAR and
+temporary scene-mutation capabilities, but it does not integrate them into a
+navigation environment or policy. The current repository does not yet include:
 
-- LiDAR observations.
+- LiDAR observations in a Gymnasium environment or learned policy.
 - Camera or depth perception.
-- scene-object spawning or procedural obstacle courses.
+- Reusable scene specifications or procedural obstacle courses.
 - visible start/goal pads.
 - obstacle-aware Colosseum Gymnasium environments.
 - 3D obstacle-aware A* planning.
 - curriculum training or replay-buffer resume.
 - dynamic obstacle avoidance in Colosseum.
+
+M13.2 is the next milestone and will build on the validated scene and marker
+capabilities without changing the completed M12 interfaces.
 
 ## Tech Stack
 
@@ -88,6 +95,7 @@ yet include:
 - [M12 Colosseum Gymnasium wrapper](docs/m12_colosseum_gym_wrapper.md)
 - [M12 Colosseum TD3 baseline](docs/m12_colosseum_td3_baseline.md)
 - [M13.0 baseline reproducibility freeze](docs/m13_0_baseline_reproducibility.md)
+- [M13.1 Colosseum capability probe](docs/m13_colosseum_capability_probe.md)
 
 ## Project Structure
 
