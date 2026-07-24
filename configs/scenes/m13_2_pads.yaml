@@ -1,0 +1,55 @@
+schema_version: 1
+scene_id: pads-course
+workspace:
+  min_x: -3.0
+  max_x: 12.0
+  min_y: -6.0
+  max_y: 6.0
+  min_z: -6.0
+  max_z: 0.0
+reference:
+  origin_policy: measured_grounded_vehicle
+  initial_vehicle_local_position:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  initial_vehicle_exclusion:
+    horizontal_clearance_m: 2.0
+    vertical_clearance_m: 3.0
+    below_ground_tolerance_m: 0.25
+start_pad:
+  name: start-pad
+  base_center: {x: 4.0, y: 0.0, z: 0.0}
+  dimensions: {width: 1.5, depth: 1.5, height: 0.1}
+  runtime_asset_name: Cube
+  collision_intent: solid_expected
+  physical_geometry_expected: true
+  physics_enabled: false
+  collision_response_verified: false
+  appearance:
+    material_name: /AirSim/Models/MiniQuadCopter/Prop_Red_Plastic.Prop_Red_Plastic
+    segmentation_id: 121
+  clearance:
+    horizontal_margin_m: 1.0
+    vertical_clearance_m: 3.0
+    anchor_clearance_m: 2.0
+    minimum_anchor_clearance_m: 1.0
+goal_pad:
+  name: goal-pad
+  base_center: {x: 9.0, y: 0.0, z: 0.0}
+  dimensions: {width: 1.5, depth: 1.5, height: 0.1}
+  runtime_asset_name: Cube
+  collision_intent: solid_expected
+  physical_geometry_expected: true
+  physics_enabled: false
+  collision_response_verified: false
+  appearance:
+    marker_color_rgba: [0.0, 1.0, 0.0, 1.0]
+    segmentation_id: 122
+  clearance:
+    horizontal_margin_m: 1.0
+    vertical_clearance_m: 3.0
+    anchor_clearance_m: 2.0
+    minimum_anchor_clearance_m: 1.0
+static_obstacles: []
+dynamic_obstacles: []
