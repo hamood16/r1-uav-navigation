@@ -39,11 +39,34 @@ from r1_uav_nav.sim.scene_specification import (
     load_scene_config,
     resolve_scene,
 )
+from r1_uav_nav.sim.static_course import (
+    ValidatedCourse,
+    course_report_dict,
+    generate_solvable_course,
+    load_course_suite_config,
+    resolve_profile_scene_path,
+)
 
 DEFAULT_SCENE_CONFIG = Path("configs/scenes/m13_2_minimal.yaml")
 DEFAULT_ASSET_CATALOG = Path("configs/scenes/m13_2_assets.yaml")
+DEFAULT_COURSE_CONFIG = Path("configs/planning/m13_3_voxel_astar.yaml")
 DEFAULT_COMMAND = "validate"
 MAX_HOLD_SECONDS = 15.0
+
+
+class _ExplicitSceneConfigAction(argparse.Action):
+    """Remember an explicit scene path without changing its parsed value."""
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str | None = None,
+    ) -> None:
+        del parser, option_string
+        setattr(namespace, self.dest, values)
+        namespace.scene_config_explicit = True
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -51,8 +74,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Validate or supervise one deterministic M13.2 scene."
     )
-    parser.add_argument("--scene-config", type=Path, default=DEFAULT_SCENE_CONFIG)
+    parser.add_argument(
+        "--scene-config",
+        type=Path,
+        default=DEFAULT_SCENE_CONFIG,
+        action=_ExplicitSceneConfigAction,
+    )
     parser.add_argument("--asset-catalog", type=Path, default=DEFAULT_ASSET_CATALOG)
+    parser.add_argument("--course-config", type=Path, default=DEFAULT_COURSE_CONFIG)
+    parser.add_argument("--course-profile")
+    parser.add_argument("--course-seed", type=int)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_SCENE_REPORTS_DIR)
     subparsers = parser.add_subparsers(dest="command")
 
@@ -107,7 +138,7 @@ def build_parser() -> argparse.ArgumentParser:
     calibrate.add_argument("--allow-marker-flush", action="store_true")
     calibrate.add_argument("--hold-seconds", type=float, default=8.0)
 
-    parser.set_defaults(command=DEFAULT_COMMAND)
+    parser.set_defaults(command=DEFAULT_COMMAND, scene_config_explicit=False)
     return parser
 
 
@@ -135,11 +166,7 @@ def run(
 ) -> int:
     """Run one mode, preserving cleanup and report evidence."""
     root = (repository_root or Path.cwd()).resolve()
-    scene = (
-        resolve_scene(load_scene_config(args.scene_config))
-        if args.command in {"validate", "generate", "materialize"}
-        else None
-    )
+    scene, course = _resolve_scene_or_course(args, root)
     catalog = (
         load_asset_catalog(args.asset_catalog)
         if args.command == "materialize"
@@ -150,6 +177,11 @@ def run(
         print(
             f"Scene {scene.config.scene_id!r} is valid: " f"digest={scene.scene_digest}"
         )
+        if course is not None:
+            print(
+                f"Course {course.result.profile_id!r} is solvable: "
+                f"digest={course.result.solvability_digest}"
+            )
         return 0
     if args.command == "generate":
         assert scene is not None
@@ -172,6 +204,8 @@ def run(
     runtime: SceneRuntimeState | None = None
     materialized = None
     report_data: dict[str, Any] = {}
+    if course is not None:
+        report_data["static_course_solvability"] = course_report_dict(course)
     cleanup_results = ()
     errors: list[str] = []
     interrupted = False
@@ -357,6 +391,47 @@ def run(
     if interrupted:
         return 130
     return 0 if report.success else 1
+
+
+def _resolve_scene_or_course(
+    args: argparse.Namespace,
+    root: Path,
+) -> tuple[Any | None, ValidatedCourse | None]:
+    scene_commands = {"validate", "generate", "materialize"}
+    if args.command not in scene_commands:
+        if args.course_profile is not None or args.course_seed is not None:
+            raise ValueError(
+                "course arguments apply only to validate, generate, or materialize"
+            )
+        return None, None
+
+    if args.course_profile is None:
+        if args.course_seed is not None:
+            raise ValueError("--course-seed requires --course-profile")
+        return resolve_scene(load_scene_config(args.scene_config)), None
+
+    if args.course_seed is None:
+        raise ValueError("--course-profile requires --course-seed")
+    suite = load_course_suite_config(args.course_config)
+    profile = suite.profile(args.course_profile)
+    profile_scene_path = resolve_profile_scene_path(profile, root)
+    if args.scene_config_explicit:
+        supplied_scene_path = (
+            args.scene_config
+            if args.scene_config.is_absolute()
+            else root / args.scene_config
+        ).resolve()
+        if supplied_scene_path != profile_scene_path:
+            raise ValueError(
+                "--scene-config conflicts with the selected course profile"
+            )
+    course = generate_solvable_course(
+        suite,
+        profile.profile_id,
+        args.course_seed,
+        repository_root=root,
+    )
+    return course.scene, course
 
 
 def _validate_live_arguments(
