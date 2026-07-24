@@ -1,0 +1,42 @@
+schema_version: 1
+scene_id: m13-3-medium
+workspace: {min_x: -4.0, max_x: 16.0, min_y: -8.0, max_y: 8.0, min_z: -8.0, max_z: 0.0}
+reference:
+  origin_policy: measured_grounded_vehicle
+  initial_vehicle_local_position: {x: 0.0, y: 0.0, z: 0.0}
+  initial_vehicle_exclusion:
+    horizontal_clearance_m: 2.0
+    vertical_clearance_m: 3.0
+    below_ground_tolerance_m: 0.25
+start_pad:
+  name: start-pad
+  base_center: {x: 4.0, y: 0.0, z: 0.0}
+  dimensions: {width: 1.5, depth: 1.5, height: 0.1}
+  runtime_asset_name: Cube
+goal_pad:
+  name: goal-pad
+  base_center: {x: 13.0, y: 0.0, z: 0.0}
+  dimensions: {width: 1.5, depth: 1.5, height: 0.1}
+  runtime_asset_name: Cube
+  appearance:
+    marker_color_rgba: [0.0, 1.0, 0.0, 1.0]
+static_obstacles:
+  - name: centre-blocker
+    base_center: {x: 8.5, y: 0.0, z: 0.0}
+    dimensions: {width: 0.5, depth: 12.0, height: 4.0}
+    runtime_asset_name: Cube
+dynamic_obstacles: []
+generation:
+  enabled: true
+  seed: 2100
+  obstacle_count: 5
+  x_range: [6.0, 11.0]
+  y_range: [-5.0, 5.0]
+  width_range: [0.6, 1.4]
+  depth_range: [0.6, 1.4]
+  height_range: [1.5, 3.5]
+  yaw_choices_degrees: [0.0, 45.0, 90.0, 135.0]
+  max_attempts_per_object: 150
+  max_total_attempts: 1500
+  runtime_asset_name: Cube
+minimum_object_separation_m: 0.1

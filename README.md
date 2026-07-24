@@ -28,6 +28,9 @@ The current project demonstrates:
 - A live-validated M13.2 deterministic scene system with calibrated Cube geometry,
   distinguishable start/goal pads, static layouts, reproducible reset, exact
   ownership cleanup, and measured-relative start-anchor positioning.
+- M13.3 deterministic static-course generation with conservative 3D voxel
+  occupancy, bounded solvability rejection, and reproducible 3D A* reference
+  paths across training and held-out profiles.
 
 ## Current M12 Baseline
 
@@ -51,7 +54,8 @@ LiDAR perception, or real-world readiness.
 
 - DQN: implemented through Stable-Baselines3 for discrete grid navigation.
 - TD3: implemented through Stable-Baselines3 for continuous navigation.
-- A*: implemented as a classical static-grid planning baseline.
+- A*: implemented for both classical 2D grids and deterministic 3D voxel-course
+  solvability validation.
 
 DDPG, SAC, PPO, and other algorithms are future options only; they are not
 implemented in the current repository.
@@ -62,19 +66,22 @@ M13 is moving toward obstacle-aware 3D navigation. M13.1 validates raw LiDAR and
 temporary scene-mutation capabilities but does not integrate them into a
 navigation environment or policy. M13.2 now validates deterministic live scene
 materialization, same-seed reset, exact cleanup, and optional start-anchor
-positioning. Physical collision response remains unverified, so intended Cube
-geometry must not yet be described as proven simulator collision behavior. The
-current repository does not yet include:
+positioning. M13.3 now rejects impossible configured static courses offline and
+records deterministic 3D A* reference paths before optional simulator use.
+Physical collision response remains unverified, and the proof does not include
+undocumented built-in Blocks geometry. The current repository does not yet
+include:
 
 - LiDAR observations in a Gymnasium environment or learned policy.
 - Camera or depth perception.
 - obstacle-aware Colosseum Gymnasium environments.
-- 3D obstacle-aware A* planning.
+- occupancy built from live LiDAR.
 - curriculum training or replay-buffer resume.
 - dynamic obstacle avoidance in Colosseum.
 
-M13.3 is the next milestone. It will build on the validated M13.2 scene
-specification without changing the completed M12 interfaces.
+M13.3 is the next milestone after M13.2 in the roadmap and is now complete.
+M13.4 is the current next milestone. It can use the completed M13.3 static-course
+and reference-path evidence without changing the completed M12 interfaces.
 
 ## Tech Stack
 
@@ -102,6 +109,7 @@ specification without changing the completed M12 interfaces.
 - [M13.0 baseline reproducibility freeze](docs/m13_0_baseline_reproducibility.md)
 - [M13.1 Colosseum capability probe](docs/m13_colosseum_capability_probe.md)
 - [M13.2 deterministic scene specification](docs/m13_2_scene_specification.md)
+- [M13.3 static-course solvability](docs/m13_3_static_course_solvability.md)
 
 ## Project Structure
 
@@ -109,6 +117,7 @@ specification without changing the completed M12 interfaces.
 r1-UAV-navigation/
 |-- configs/
 |   |-- env/
+|   |-- planning/
 |   |-- scenes/
 |   `-- training/
 |-- docs/

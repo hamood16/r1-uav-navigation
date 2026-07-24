@@ -1,0 +1,322 @@
+schema_version: 1
+planner:
+  schema_version: 1
+  resolution_m: 0.25
+  uav_collision_radius_m: 0.35
+  additional_safety_margin_m: 0.15
+  total_clearance_m: 0.50
+  connectivity: 26
+  max_voxels: 1000000
+  max_expansions: 250000
+profiles:
+  - profile_id: empty
+    difficulty: empty
+    split: validation
+    scene_config: configs/scenes/m13_3_empty.yaml
+    base_seeds: [0]
+    max_candidate_attempts: 1
+    constraints:
+      obstacle_count_min: 0
+      obstacle_count_max: 0
+      direct_line_clear: true
+      path_efficiency_min: 0.95
+      path_efficiency_max: 1.0
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 0.25
+      required_x_direction: positive
+    accepted_baselines:
+      - base_seed: 0
+        accepted_candidate_seed: 0
+        attempt_index: 0
+        scene_digest: 52141a212e85853072e02bb4fb603a0b14f2cdce6b80e9074e31241cae85e905
+        occupancy_digest: f80f56c2feda9d5f681bb3c620c02b29bd6a56964ed92907f3052fc40cc04a97
+        solvability_digest: eafc63e320efd3f913e11b7be2e3f7fa8c2ece317c0687f49d3c0a5c10cf29dd
+        reference_path_length_m: 9.357071421
+        path_efficiency_ratio: 0.961839404
+        vertical_excursion_m: 0.025
+        expanded_nodes: 37
+        direct_line_clear: true
+  - profile_id: easy
+    difficulty: easy
+    split: training
+    scene_config: configs/scenes/m13_3_easy.yaml
+    base_seeds: [1100, 1200, 1300, 1400]
+    max_candidate_attempts: 32
+    constraints:
+      obstacle_count_min: 2
+      obstacle_count_max: 4
+      direct_line_clear: true
+      path_efficiency_min: 0.80
+      path_efficiency_max: 1.0
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 0.50
+      required_x_direction: positive
+    accepted_baselines:
+      - base_seed: 1100
+        accepted_candidate_seed: 1100
+        attempt_index: 0
+        scene_digest: 3335bbe988e1c76e150ecea80689a8dd048838b73277b52fd587dbac8825e17c
+        occupancy_digest: a8758d4d1f1c09bfd77ae8378ab29639d23c67ebfe98b9f880eb9553cf2b854d
+        solvability_digest: c19618bc3539e2b9c69255e6a09a5bc98cebfd6713cae1eb245ce3d34aab4154
+        reference_path_length_m: 9.357071421
+        path_efficiency_ratio: 0.961839404
+        vertical_excursion_m: 0.025
+        expanded_nodes: 37
+        direct_line_clear: true
+      - base_seed: 1200
+        accepted_candidate_seed: 1200
+        attempt_index: 0
+        scene_digest: f981cb64c90ee75a82a751d37039fab6c2d7e295ca98134cfc4439281a643f37
+        occupancy_digest: cb3a0f110f04f148be521a6d7fdae185dfa889283cff1d5c4300287eb73f786e
+        solvability_digest: 4de1453aff25e485fef6e7209d42989ae66427f981f9ea72b8264b12ace8847f
+        reference_path_length_m: 9.357071421
+        path_efficiency_ratio: 0.961839404
+        vertical_excursion_m: 0.025
+        expanded_nodes: 37
+        direct_line_clear: true
+      - base_seed: 1300
+        accepted_candidate_seed: 1300
+        attempt_index: 0
+        scene_digest: d603a6dd4c51f08ce13265235e16f44ed42540c2f795302299a28aa1430474cd
+        occupancy_digest: 5d80aad0af7182092a8eddb5dd1c7c27d9f0128d65fbfb4b07b0862b3101a075
+        solvability_digest: be7ec1f6927347002c992956f4e4077aee095522af6258b6fa3aee7523e95e46
+        reference_path_length_m: 9.357071421
+        path_efficiency_ratio: 0.961839404
+        vertical_excursion_m: 0.025
+        expanded_nodes: 37
+        direct_line_clear: true
+      - base_seed: 1400
+        accepted_candidate_seed: 1400
+        attempt_index: 0
+        scene_digest: 3a33d0f96ba863e59bde02cafa8e93d96d34a594093f7bb9ff5d472bed3853d3
+        occupancy_digest: f042f91ab44838fd361389f9f1a5b03e0129ef0826677334fb94ef746416e6e6
+        solvability_digest: d9dca75c1aac3640575893931cd3b6a994647dec4a6324d3f6f49b1714e229e3
+        reference_path_length_m: 9.357071421
+        path_efficiency_ratio: 0.961839404
+        vertical_excursion_m: 0.025
+        expanded_nodes: 37
+        direct_line_clear: true
+  - profile_id: medium
+    difficulty: medium
+    split: training
+    scene_config: configs/scenes/m13_3_medium.yaml
+    base_seeds: [2100, 2200, 2300, 2400]
+    max_candidate_attempts: 32
+    constraints:
+      obstacle_count_min: 5
+      obstacle_count_max: 8
+      direct_line_clear: false
+      path_efficiency_min: 0.55
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 0.50
+      vertical_excursion_max_m: 3.0
+      required_structure_prefixes: [centre-blocker]
+      required_x_direction: positive
+    accepted_baselines:
+      - base_seed: 2100
+        accepted_candidate_seed: 2100
+        attempt_index: 0
+        scene_digest: 689f898f9f456da2074dcf5102daef5729a8b59dc184c3eb14c899d698215970
+        occupancy_digest: cda3629e1ba13f21f5bfdba31f0ba0de6f6445f7b0a9058ea7068e5be09d0172
+        solvability_digest: 7e527945c98b57c9cc73d84daceb455049c6e24368826199ead8e9a3d0e39298
+        reference_path_length_m: 11.635246014
+        path_efficiency_ratio: 0.773511792
+        vertical_excursion_m: 2.775
+        expanded_nodes: 3970
+        direct_line_clear: false
+      - base_seed: 2200
+        accepted_candidate_seed: 2200
+        attempt_index: 0
+        scene_digest: 27d637956c03419bd40ac759fb29e2513acd6c37c337224fbfd3a7ca0c85fb48
+        occupancy_digest: e7c693a033fbfc034b91413de02249a0b28d9650433bb1260f9449645d94582e
+        solvability_digest: ab1bed3a1cd2c0f4c6bcd7c845a199edddfed9ff3befe4a35d6ffb7d47c96516
+        reference_path_length_m: 11.635246014
+        path_efficiency_ratio: 0.773511792
+        vertical_excursion_m: 2.775
+        expanded_nodes: 4472
+        direct_line_clear: false
+      - base_seed: 2300
+        accepted_candidate_seed: 2300
+        attempt_index: 0
+        scene_digest: 7dda14ccff85b45c92dd2970e7268bfd354725527ea2d94129e256b19a0f5658
+        occupancy_digest: 5c972f989fa361130a1982488b4f2e3808cbb8c15bf98f1aa260e9e56e611bd4
+        solvability_digest: 7533c87fc3aaf6e0840ff859b78f328b5e43e57a392fb82e1da21c0ceb2da18e
+        reference_path_length_m: 11.635246014
+        path_efficiency_ratio: 0.773511792
+        vertical_excursion_m: 2.775
+        expanded_nodes: 3868
+        direct_line_clear: false
+      - base_seed: 2400
+        accepted_candidate_seed: 2400
+        attempt_index: 0
+        scene_digest: dae46d737031bbab7195ca4add665b47a865764b202a24fa116b41c691c256cd
+        occupancy_digest: 87a3389bf9a4d5457f9a16781c3a554a6bf3d856d2145fc270242e83f0cdf5d6
+        solvability_digest: b086db36cf24cb0ff25bacee8f6a16ba62c08f9e25a20b691a9c9094636fcdea
+        reference_path_length_m: 11.635246014
+        path_efficiency_ratio: 0.773511792
+        vertical_excursion_m: 2.775
+        expanded_nodes: 3928
+        direct_line_clear: false
+  - profile_id: hard
+    difficulty: hard
+    split: training
+    scene_config: configs/scenes/m13_3_hard.yaml
+    base_seeds: [3100, 3200, 3300, 3400]
+    max_candidate_attempts: 32
+    constraints:
+      obstacle_count_min: 10
+      obstacle_count_max: 14
+      direct_line_clear: false
+      path_efficiency_min: 0.30
+      path_efficiency_max: 0.8333
+      vertical_excursion_min_m: 1.0
+      vertical_excursion_max_m:
+      required_structure_prefixes: [dead-end-a, dead-end-b]
+      required_x_direction: positive
+    accepted_baselines:
+      - base_seed: 3100
+        accepted_candidate_seed: 3100
+        attempt_index: 0
+        scene_digest: eefe582262c8480bc05d7ff6fa312590cf2041fc90a817c6a5532bcba25c5984
+        occupancy_digest: b35f8f14da8f6667f765a815e09416e907f256997ed073143316c7ecf9d0ec7b
+        solvability_digest: b614d95e45459629c401864d656bbc6efc06e6da985eab6672c12d5cab42f133
+        reference_path_length_m: 14.195906186
+        path_efficiency_ratio: 0.633985593
+        vertical_excursion_m: 4.275
+        expanded_nodes: 9428
+        direct_line_clear: false
+      - base_seed: 3200
+        accepted_candidate_seed: 3200
+        attempt_index: 0
+        scene_digest: b9abac7ee2ae431f0941430e1407272c2d645d4723078aa40673de9c3256ab25
+        occupancy_digest: 19f35ba7901564ac92e001d860e228466b1e3c08cadb743725bf80e681f0c310
+        solvability_digest: 02478666763794ab36add521beba5ef2b7a5bb63aae4a499862af4dd64cecd39
+        reference_path_length_m: 13.903012967
+        path_efficiency_ratio: 0.647341696
+        vertical_excursion_m: 4.275
+        expanded_nodes: 7800
+        direct_line_clear: false
+      - base_seed: 3300
+        accepted_candidate_seed: 3300
+        attempt_index: 0
+        scene_digest: b46007e6602851a6d0b074b154a1d005ec323ed14b27af3f17a7d59b4510197c
+        occupancy_digest: 83e42009ea744c0d89657f78a0070003fa22df83a58b670405cfcab9c4bcca7b
+        solvability_digest: 473e0bef25aacb5d373cef5cb3f5f535b4070d7d1b81d23723e980290847b321
+        reference_path_length_m: 14.195906186
+        path_efficiency_ratio: 0.633985593
+        vertical_excursion_m: 4.275
+        expanded_nodes: 10173
+        direct_line_clear: false
+      - base_seed: 3400
+        accepted_candidate_seed: 3400
+        attempt_index: 0
+        scene_digest: 84b6399c123dfe49a1c8fb451215ca0c1d170542a1a50bc1440a2bd959b0e8ec
+        occupancy_digest: eb3a135680b24fc2295fdee890e96be5e96f432ee07c26fb88412f8936206466
+        solvability_digest: 377775c31cc02b872c5ca3fe6faeee48a7a5c75434418438ed24b422cc849a0a
+        reference_path_length_m: 14.061931590
+        path_efficiency_ratio: 0.640025870
+        vertical_excursion_m: 4.275
+        expanded_nodes: 9134
+        direct_line_clear: false
+  - profile_id: held-out-reverse
+    difficulty: held_out
+    split: held_out
+    scene_config: configs/scenes/m13_3_held_out_reverse.yaml
+    base_seeds: [9100, 9200, 9300]
+    max_candidate_attempts: 32
+    constraints:
+      obstacle_count_min: 5
+      obstacle_count_max: 10
+      direct_line_clear: false
+      path_efficiency_min: 0.50
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 4.0
+      required_structure_prefixes: [reverse-blocker]
+      required_x_direction: negative
+    accepted_baselines:
+      - base_seed: 9100
+        accepted_candidate_seed: 9100
+        attempt_index: 0
+        scene_digest: b20944416f70691297d0dac2777e8b5a06c248e99923550f609ac7c54fc7bdc1
+        occupancy_digest: f07c5b3b415d2be64614c159fa6ba4ce782a23b2b255d98b334bb8d491070a9d
+        solvability_digest: ad2bca2be3ef77c6f44d110a77a632203bed70c1e52f461bda13d00f3bb783cf
+        reference_path_length_m: 11.221032452
+        path_efficiency_ratio: 0.802065232
+        vertical_excursion_m: 2.275
+        expanded_nodes: 3969
+        direct_line_clear: false
+      - base_seed: 9200
+        accepted_candidate_seed: 9200
+        attempt_index: 0
+        scene_digest: 9656d0528c5adb536820986e508644b487d9401481f5f55602d3e21a7856e48d
+        occupancy_digest: fde1c794fc09eb0d9bf055d8a0a4725057fae83b1207b441995d0e1d671b586b
+        solvability_digest: 44e330e3072ac678a8b90560e7f781f4f13b4082b406bd505cce526f667c3cfa
+        reference_path_length_m: 11.221032452
+        path_efficiency_ratio: 0.802065232
+        vertical_excursion_m: 2.275
+        expanded_nodes: 3188
+        direct_line_clear: false
+      - base_seed: 9300
+        accepted_candidate_seed: 9300
+        attempt_index: 0
+        scene_digest: 4cdfbb8d3e5dd83049f0ae7ba3e15299471f01db7215816dd778a17b254f5889
+        occupancy_digest: 7adf91442218294e37e66d25619d79d22915a00754d96a28c55c9a3f80157b13
+        solvability_digest: ffa45cf58c05363a15fc2f21f55faa65ae5c9522847cd7f08619944bad70012b
+        reference_path_length_m: 11.221032452
+        path_efficiency_ratio: 0.802065232
+        vertical_excursion_m: 2.275
+        expanded_nodes: 3752
+        direct_line_clear: false
+  - profile_id: held-out-elevated
+    difficulty: held_out
+    split: held_out
+    scene_config: configs/scenes/m13_3_held_out_elevated.yaml
+    base_seeds: [10100, 10200, 10300]
+    max_candidate_attempts: 32
+    constraints:
+      obstacle_count_min: 5
+      obstacle_count_max: 10
+      direct_line_clear: false
+      path_efficiency_min: 0.50
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 1.0
+      vertical_excursion_max_m: 5.0
+      required_structure_prefixes: [elevated-blocker]
+      required_x_direction: positive
+      require_lateral_direction: true
+      minimum_goal_above_start_m: 1.0
+    accepted_baselines:
+      - base_seed: 10100
+        accepted_candidate_seed: 10100
+        attempt_index: 0
+        scene_digest: 676e949db8d7fdbd5f692440423ce3b1650e883071f568a28f04ef9747cf5b05
+        occupancy_digest: 8fb1ef1077cda030a35c8b7d2cce9d881482020236ad45c50c2082ad455d51c0
+        solvability_digest: e44b9d21a483828cf4eaa5ad3f07e056d93a5aae1e2d79d2fde52bc16b27bd5d
+        reference_path_length_m: 13.612669590
+        path_efficiency_ratio: 0.834356304
+        vertical_excursion_m: 2.775
+        expanded_nodes: 5152
+        direct_line_clear: false
+      - base_seed: 10200
+        accepted_candidate_seed: 10200
+        attempt_index: 0
+        scene_digest: b51bee0ac270d59bba3b132fecc10c209178f1e89e42a97e0188417e10d3ea57
+        occupancy_digest: e0182d2a041a3d6332af84ffec846b8b200d8fefa44e1b8d7a2e461f374c9f0c
+        solvability_digest: d3dfc1542cc684babf98b51c1e0afa1ca435f2c6e7690d8762f52d51ee76efb9
+        reference_path_length_m: 13.612669590
+        path_efficiency_ratio: 0.834356304
+        vertical_excursion_m: 2.775
+        expanded_nodes: 5011
+        direct_line_clear: false
+      - base_seed: 10300
+        accepted_candidate_seed: 10300
+        attempt_index: 0
+        scene_digest: ede5b606fc9c851545af2e4b1ba05222861c56809ee8f74a213dda168ce2bcc5
+        occupancy_digest: df5ecf1e8c86d9194db1d3211877976952f83ab908487e346a1ee759b092ec47
+        solvability_digest: 1815329b08d7d2061214ff5f4a3ca8e36469827dfd04c5829fafdf9ba2d8744d
+        reference_path_length_m: 13.612669590
+        path_efficiency_ratio: 0.834356304
+        vertical_excursion_m: 2.775
+        expanded_nodes: 5376
+        direct_line_clear: false
