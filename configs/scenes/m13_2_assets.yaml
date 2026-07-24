@@ -1,0 +1,14 @@
+schema_version: 1
+catalog_version: 2
+assets:
+  - asset_name: Cube
+    nominal_dimensions_m:
+      width: 1.0
+      depth: 1.0
+      height: 1.0
+    status: accepted
+    evidence_level: operator_confirmed_nominal
+    uncertainty_m: 0.05
+    tested_stack: Colosseum Blocks v2.0.0-beta / airsim 1.8.1
+    evidence_reference: m13_2_calibrate-asset_20260723T134504_aa62d819.json
+    scale_readback_verified: true

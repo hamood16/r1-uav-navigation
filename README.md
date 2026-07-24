@@ -25,6 +25,9 @@ The current project demonstrates:
 - A supervised Colosseum capability probe validating scene surveys, debug markers,
   temporary-object lifecycle, raw LiDAR access, `SensorLocalFrame` behavior, and
   bounded RPC performance.
+- A live-validated M13.2 deterministic scene system with calibrated Cube geometry,
+  distinguishable start/goal pads, static layouts, reproducible reset, exact
+  ownership cleanup, and measured-relative start-anchor positioning.
 
 ## Current M12 Baseline
 
@@ -56,20 +59,22 @@ implemented in the current repository.
 ## Current Limitations And M13 Direction
 
 M13 is moving toward obstacle-aware 3D navigation. M13.1 validates raw LiDAR and
-temporary scene-mutation capabilities, but it does not integrate them into a
-navigation environment or policy. The current repository does not yet include:
+temporary scene-mutation capabilities but does not integrate them into a
+navigation environment or policy. M13.2 now validates deterministic live scene
+materialization, same-seed reset, exact cleanup, and optional start-anchor
+positioning. Physical collision response remains unverified, so intended Cube
+geometry must not yet be described as proven simulator collision behavior. The
+current repository does not yet include:
 
 - LiDAR observations in a Gymnasium environment or learned policy.
 - Camera or depth perception.
-- Reusable scene specifications or procedural obstacle courses.
-- visible start/goal pads.
 - obstacle-aware Colosseum Gymnasium environments.
 - 3D obstacle-aware A* planning.
 - curriculum training or replay-buffer resume.
 - dynamic obstacle avoidance in Colosseum.
 
-M13.2 is the next milestone and will build on the validated scene and marker
-capabilities without changing the completed M12 interfaces.
+M13.3 is the next milestone. It will build on the validated M13.2 scene
+specification without changing the completed M12 interfaces.
 
 ## Tech Stack
 
@@ -96,6 +101,7 @@ capabilities without changing the completed M12 interfaces.
 - [M12 Colosseum TD3 baseline](docs/m12_colosseum_td3_baseline.md)
 - [M13.0 baseline reproducibility freeze](docs/m13_0_baseline_reproducibility.md)
 - [M13.1 Colosseum capability probe](docs/m13_colosseum_capability_probe.md)
+- [M13.2 deterministic scene specification](docs/m13_2_scene_specification.md)
 
 ## Project Structure
 
@@ -103,6 +109,7 @@ capabilities without changing the completed M12 interfaces.
 r1-UAV-navigation/
 |-- configs/
 |   |-- env/
+|   |-- scenes/
 |   `-- training/
 |-- docs/
 |   `-- results/
