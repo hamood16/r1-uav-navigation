@@ -479,6 +479,14 @@ class ColosseumLidarUAVEnv(ColosseumUAVEnv):
     def _build_state(self, raw_state: Any) -> ColosseumUAVState:
         return self._build_named_state(raw_state)
 
+    def request_named_terminal_hover(self) -> tuple[str, ...]:
+        """Request the existing exact named terminal hover and return its errors."""
+        self.last_terminal_safety_error = None
+        self._apply_terminal_hover()
+        if self.last_terminal_safety_error is None:
+            return ()
+        return (self.last_terminal_safety_error,)
+
     def _apply_terminal_hover(self) -> None:
         try:
             self._require_client().hoverAsync(vehicle_name=self.vehicle_name).join()
