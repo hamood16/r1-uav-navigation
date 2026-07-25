@@ -6,6 +6,18 @@ from r1_uav_nav.envs.colosseum_lidar_uav_env import (
     LidarEpisodeResetOptions,
     LidarResetError,
 )
+from r1_uav_nav.envs.colosseum_obstacle_uav_env import (
+    ColosseumObstacleUAVEnv,
+    ColosseumObstacleUAVEnvConfig,
+    CourseSelectionMode,
+    ObstacleCourseSelectionConfig,
+    ObstacleEnvironmentCleanupResult,
+    ObstacleEnvironmentError,
+    ObstacleEpisodeResetOptions,
+    ObstacleResetError,
+    ObstacleRuntimeAuthorization,
+    load_colosseum_obstacle_uav_env_config,
+)
 from r1_uav_nav.envs.colosseum_uav_env import (
     ColosseumUAVEnv,
     ColosseumUAVEnvConfig,
@@ -17,18 +29,40 @@ from r1_uav_nav.envs.continuous_dynamic_uav_env import (
 )
 from r1_uav_nav.envs.dynamic_grid_uav_env import DynamicGridUAVEnv, DynamicObstacle
 from r1_uav_nav.envs.grid_uav_env import GridUAVEnv
+from r1_uav_nav.envs.obstacle_reward import (
+    ClearanceEvidence,
+    ObstacleRewardBreakdown,
+    ObstacleRewardConfig,
+    calculate_clearance_evidence,
+    calculate_obstacle_reward,
+)
 
 __all__ = [
+    "ClearanceEvidence",
     "ColosseumUAVEnv",
     "ColosseumUAVEnvConfig",
     "ColosseumUAVState",
     "ColosseumLidarUAVEnv",
     "ColosseumLidarUAVEnvConfig",
+    "ColosseumObstacleUAVEnv",
+    "ColosseumObstacleUAVEnvConfig",
     "ContinuousDynamicObstacle",
     "ContinuousDynamicUAVEnv",
+    "CourseSelectionMode",
     "DynamicGridUAVEnv",
     "DynamicObstacle",
     "GridUAVEnv",
     "LidarEpisodeResetOptions",
     "LidarResetError",
+    "ObstacleCourseSelectionConfig",
+    "ObstacleEnvironmentCleanupResult",
+    "ObstacleEnvironmentError",
+    "ObstacleEpisodeResetOptions",
+    "ObstacleResetError",
+    "ObstacleRewardBreakdown",
+    "ObstacleRewardConfig",
+    "ObstacleRuntimeAuthorization",
+    "calculate_clearance_evidence",
+    "calculate_obstacle_reward",
+    "load_colosseum_obstacle_uav_env_config",
 ]

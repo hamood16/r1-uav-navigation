@@ -35,6 +35,10 @@ The current project demonstrates:
   83-value environment observation, bounded sensor-failure handling, an accepted
   grounded live probe, accepted known-geometry distance evidence, and an accepted
   airborne observation smoke test with named cleanup.
+- M13.5 Phase A provides an opt-in obstacle-aware Gymnasium environment that
+  composes the validated LiDAR lifecycle with deterministic solvable courses,
+  configurable safety rewards, exact workspace checks, episode metrics, and
+  ordered scene cleanup. Its current acceptance evidence is fake-client/offline.
 
 ## Current M12 Baseline
 
@@ -87,7 +91,8 @@ bounded airborne observation smoke test are live-validated. The legacy M12
 environment remains a 10-value observation; the opt-in LiDAR environment adds 72
 sector distances and one validity flag without exposing M13.3 obstacle
 coordinates or reference paths. No obstacle-aware policy has been trained.
-M13.5 is the next milestone.
+M13.5 is the next milestone and its Phase A environment is implemented. A
+supervised M13.5 smoke validation and policy training remain future work.
 
 ## Tech Stack
 
@@ -117,6 +122,7 @@ M13.5 is the next milestone.
 - [M13.2 deterministic scene specification](docs/m13_2_scene_specification.md)
 - [M13.3 static-course solvability](docs/m13_3_static_course_solvability.md)
 - [M13.4 LiDAR feature extraction](docs/m13_4_lidar_feature_extraction.md)
+- [M13.5 obstacle-aware Gymnasium environment](docs/m13_5_obstacle_aware_gym_env.md)
 
 ## Project Structure
 

@@ -186,6 +186,16 @@ def test_constructor_is_offline_and_observation_shape_is_83() -> None:
     assert env.observation_space.dtype == np.float32
 
 
+def test_public_terminal_hover_uses_exact_named_vehicle() -> None:
+    client = FakeNamedLidarClient()
+    env = _environment(client)
+    env.client = client
+
+    assert env.request_named_terminal_hover() == ()
+    assert ("hover", "SimpleFlight") in client.calls
+    assert not any(call[0] == "land" for call in client.calls)
+
+
 def test_reset_never_calls_global_reset_and_routes_exact_names() -> None:
     client = FakeNamedLidarClient()
     env = _environment(client)
