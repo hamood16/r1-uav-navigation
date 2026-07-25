@@ -65,6 +65,48 @@ class OwnershipManifestError(SceneLifecycleError):
     """Raised when ownership evidence is missing, malformed, or mismatched."""
 
 
+class StartAnchorCallbackTimeout(SceneLifecycleError):
+    """Raised when bounded start-anchor sampling exceeds its deadline or budget."""
+
+
+class StartAnchorCallbackReturnError(SceneLifecycleError):
+    """Preserve both callback and safe-return failures."""
+
+    def __init__(self, callback_error: BaseException, return_error: BaseException):
+        self.callback_error = callback_error
+        self.return_error = return_error
+        super().__init__(
+            "start-anchor callback failed and safe return also failed: "
+            f"callback={type(callback_error).__name__}: {callback_error}; "
+            f"return={type(return_error).__name__}: {return_error}"
+        )
+
+
+@dataclass
+class StartAnchorReadOnlyContext:
+    """Restricted, bounded exact-name LiDAR reader for one start-anchor callback."""
+
+    vehicle_name: str
+    lidar_name: str
+    maximum_samples: int
+    deadline: float
+    _reader: Callable[[], Any] = field(repr=False)
+    _clock: Callable[[], float] = field(repr=False)
+    samples_read: int = 0
+
+    def read_lidar(self) -> Any:
+        """Read one exact named scan within the configured callback budget."""
+        if self.samples_read >= self.maximum_samples:
+            raise StartAnchorCallbackTimeout("start-anchor sample budget exhausted")
+        if self._clock() > self.deadline:
+            raise StartAnchorCallbackTimeout("start-anchor callback deadline exceeded")
+        result = self._reader()
+        self.samples_read += 1
+        if self._clock() > self.deadline:
+            raise StartAnchorCallbackTimeout("start-anchor callback deadline exceeded")
+        return result
+
+
 class SceneBackend(Protocol):
     """Simulator-facing materialization strategy."""
 
@@ -141,6 +183,9 @@ class VehiclePositioningConfig:
     touchdown_consecutive_samples: int = 3
     final_state_confirmation_timeout_s: float = 5.0
     final_state_poll_interval_s: float = 0.2
+    start_anchor_lidar_name: str = "LidarSensor1"
+    start_anchor_callback_maximum_samples: int = 20
+    start_anchor_callback_timeout_s: float = 5.0
 
     def __post_init__(self) -> None:
         if not self.vehicle_name.strip():
@@ -157,6 +202,7 @@ class VehiclePositioningConfig:
             "landing_poll_interval_s",
             "final_state_confirmation_timeout_s",
             "final_state_poll_interval_s",
+            "start_anchor_callback_timeout_s",
         ):
             value = float(getattr(self, name))
             if not math.isfinite(value) or value <= 0:
@@ -169,6 +215,16 @@ class VehiclePositioningConfig:
             or self.touchdown_consecutive_samples <= 0
         ):
             raise ValueError("touchdown_consecutive_samples must be a positive integer")
+        if not self.start_anchor_lidar_name.strip():
+            raise ValueError("start_anchor_lidar_name must not be empty")
+        if (
+            isinstance(self.start_anchor_callback_maximum_samples, bool)
+            or not isinstance(self.start_anchor_callback_maximum_samples, int)
+            or self.start_anchor_callback_maximum_samples <= 0
+        ):
+            raise ValueError(
+                "start_anchor_callback_maximum_samples must be a positive integer"
+            )
 
 
 @dataclass(frozen=True)
@@ -1104,7 +1160,9 @@ def position_vehicle_at_start_and_return(
     runtime: SceneRuntimeState,
     config: VehiclePositioningConfig,
     *,
+    start_anchor_callback: Callable[[StartAnchorReadOnlyContext], Any] | None = None,
     sleep_fn: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.monotonic,
 ) -> dict[str, Any]:
     """Demonstrate the start anchor, then return and land at original safe ground."""
     if not all(
@@ -1150,6 +1208,13 @@ def position_vehicle_at_start_and_return(
         "api_control_released": False,
         "returned_to_original_ground": False,
         "landing_confirmed": False,
+        "start_anchor_callback": {
+            "requested": start_anchor_callback is not None,
+            "status": "not_requested",
+            "samples_read": 0,
+            "result": None,
+            "error": None,
+        },
     }
     runtime.vehicle_positioning_evidence = evidence
     for point in (transit, anchor, return_airborne):
@@ -1221,59 +1286,103 @@ def position_vehicle_at_start_and_return(
     _move_and_verify(
         client, client_module, anchor, original.z, materialized, runtime, config
     )
-    _move_and_verify(
-        client,
-        client_module,
-        return_airborne,
-        original.z,
-        materialized,
-        runtime,
-        config,
-    )
-    client.hoverAsync(vehicle_name=config.vehicle_name).join()
-    client.landAsync(vehicle_name=config.vehicle_name).join()
-    (
-        touchdown_state,
-        _touchdown_position,
-        _touchdown_speed,
-    ) = _confirm_physical_touchdown(
-        client,
-        config,
-        original,
-        runtime,
-        evidence,
-        sleep_fn=sleep_fn,
-    )
-    evidence["landed_state_before_disarm"] = getattr(
-        touchdown_state, "landed_state", None
-    )
-    runtime.cleanup_state = replace(runtime.cleanup_state, airborne=False)
-    client.armDisarm(False, vehicle_name=config.vehicle_name)
-    runtime.cleanup_state = replace(runtime.cleanup_state, armed=False)
-    client.enableApiControl(False, vehicle_name=config.vehicle_name)
-    _final_state, final_position, final_speed = _confirm_final_landed_state(
-        client,
-        client_module,
-        config,
-        original,
-        evidence,
-        sleep_fn=sleep_fn,
-    )
-    runtime.cleanup_state = replace(runtime.cleanup_state, api_control_enabled=False)
-    evidence["api_control_released"] = True
-    collision = client.simGetCollisionInfo(vehicle_name=config.vehicle_name)
-    if bool(getattr(collision, "has_collided", False)):
-        timestamp = getattr(collision, "time_stamp", None)
-        if timestamp != runtime.collision_baseline_timestamp:
-            raise SceneLifecycleError("new collision detected after landing")
-    evidence["returned_ground_position"] = asdict(final_position)
-    evidence["returned_to_original_ground"] = True
-    evidence["landing_confirmed"] = True
-    evidence["landed_confirmation"] = True
-    evidence["landing_confirmation_attempts"] = evidence[
-        "touchdown_confirmation_attempts"
-    ]
-    runtime.cleanup_state = CleanupState()
+    callback_error: BaseException | None = None
+    if start_anchor_callback is not None:
+        client.hoverAsync(vehicle_name=config.vehicle_name).join()
+        context = StartAnchorReadOnlyContext(
+            config.vehicle_name,
+            config.start_anchor_lidar_name,
+            config.start_anchor_callback_maximum_samples,
+            clock() + config.start_anchor_callback_timeout_s,
+            lambda: client.getLidarData(
+                config.start_anchor_lidar_name, config.vehicle_name
+            ),
+            clock,
+        )
+        callback_evidence = evidence["start_anchor_callback"]
+        callback_evidence["status"] = "running"
+        try:
+            callback_result = start_anchor_callback(context)
+            json.dumps(_jsonable(callback_result), sort_keys=True)
+            callback_evidence["status"] = "succeeded"
+            callback_evidence["result"] = callback_result
+        except BaseException as exc:
+            callback_error = exc
+            callback_evidence["status"] = (
+                "interrupted" if isinstance(exc, KeyboardInterrupt) else "failed"
+            )
+            callback_evidence["error"] = f"{type(exc).__name__}: {exc}"
+        finally:
+            callback_evidence["samples_read"] = context.samples_read
+
+    return_error: BaseException | None = None
+    final_position: Vector3 | None = None
+    try:
+        _move_and_verify(
+            client,
+            client_module,
+            return_airborne,
+            original.z,
+            materialized,
+            runtime,
+            config,
+        )
+        client.hoverAsync(vehicle_name=config.vehicle_name).join()
+        client.landAsync(vehicle_name=config.vehicle_name).join()
+        (
+            touchdown_state,
+            _touchdown_position,
+            _touchdown_speed,
+        ) = _confirm_physical_touchdown(
+            client,
+            config,
+            original,
+            runtime,
+            evidence,
+            sleep_fn=sleep_fn,
+        )
+        evidence["landed_state_before_disarm"] = getattr(
+            touchdown_state, "landed_state", None
+        )
+        runtime.cleanup_state = replace(runtime.cleanup_state, airborne=False)
+        client.armDisarm(False, vehicle_name=config.vehicle_name)
+        runtime.cleanup_state = replace(runtime.cleanup_state, armed=False)
+        client.enableApiControl(False, vehicle_name=config.vehicle_name)
+        _final_state, final_position, _final_speed = _confirm_final_landed_state(
+            client,
+            client_module,
+            config,
+            original,
+            evidence,
+            sleep_fn=sleep_fn,
+        )
+        runtime.cleanup_state = replace(
+            runtime.cleanup_state, api_control_enabled=False
+        )
+        evidence["api_control_released"] = True
+        collision = client.simGetCollisionInfo(vehicle_name=config.vehicle_name)
+        if bool(getattr(collision, "has_collided", False)):
+            timestamp = getattr(collision, "time_stamp", None)
+            if timestamp != runtime.collision_baseline_timestamp:
+                raise SceneLifecycleError("new collision detected after landing")
+        evidence["returned_ground_position"] = asdict(final_position)
+        evidence["returned_to_original_ground"] = True
+        evidence["landing_confirmed"] = True
+        evidence["landed_confirmation"] = True
+        evidence["landing_confirmation_attempts"] = evidence[
+            "touchdown_confirmation_attempts"
+        ]
+        runtime.cleanup_state = CleanupState()
+    except BaseException as exc:
+        return_error = exc
+
+    if callback_error is not None and return_error is not None:
+        raise StartAnchorCallbackReturnError(callback_error, return_error)
+    if return_error is not None:
+        raise return_error
+    if callback_error is not None:
+        raise callback_error
+    assert final_position is not None
     return evidence
 
 

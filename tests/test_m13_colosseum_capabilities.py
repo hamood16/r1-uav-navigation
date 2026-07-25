@@ -3004,11 +3004,8 @@ def test_readme_distinguishes_capability_probe_from_navigation_features() -> Non
 
     assert "supervised Colosseum capability probe" in text
     assert "raw LiDAR access" in text
-    assert (
-        "does not integrate them into a navigation environment or policy"
-        in normalized_text
-    )
-    assert "LiDAR observations in a Gymnasium environment or learned policy" in text
+    assert "opt-in LiDAR observation" in normalized_text
+    assert "A trained obstacle-aware policy" in text
     assert "docs/m13_colosseum_capability_probe.md" in text
 
 

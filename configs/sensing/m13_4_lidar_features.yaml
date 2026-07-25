@@ -1,0 +1,25 @@
+schema_version: 1
+vehicle_name: SimpleFlight
+lidar_name: LidarSensor1
+coordinate_frame: SensorLocalFrame
+minimum_range_m: 0.25
+maximum_range_m: 20.0
+range_tolerance_m: 0.10
+horizontal_sector_count: 24
+horizontal_fov_degrees: [-180.0, 180.0]
+elevation_band_edges_degrees: [-30.0, -15.0, 0.0, 10.0]
+elevation_boundary_tolerance_degrees: 0.0001
+ground_filter:
+  mode: none
+self_hit_threshold_m: 0.25
+forward_window_degrees: [-30.0, 30.0]
+left_window_degrees: [-135.0, -45.0]
+right_window_degrees: [45.0, 135.0]
+maximum_repeated_timestamp_transitions: 3
+maximum_consecutive_invalid_scans: 3
+reset_scan_attempts: 10
+reset_scan_interval_s: 0.2
+safety_zero_velocity_duration_s: 0.5
+diagnostics:
+  danger_distance_m: 1.0
+  caution_distance_m: 2.0

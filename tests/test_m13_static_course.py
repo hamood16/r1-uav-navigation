@@ -519,5 +519,6 @@ def test_documentation_records_proof_boundary_and_next_milestone():
     ):
         assert required in document
     assert "M13.3 deterministic static-course generation" in readme
-    assert "M13.4 is the current next milestone" in readme
+    assert "M13.4 is complete" in readme
+    assert "M13.5 is the next milestone" in readme
     assert "docs/m13_3_static_course_solvability.md" in readme

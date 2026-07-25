@@ -1,5 +1,11 @@
 """Navigation environments."""
 
+from r1_uav_nav.envs.colosseum_lidar_uav_env import (
+    ColosseumLidarUAVEnv,
+    ColosseumLidarUAVEnvConfig,
+    LidarEpisodeResetOptions,
+    LidarResetError,
+)
 from r1_uav_nav.envs.colosseum_uav_env import (
     ColosseumUAVEnv,
     ColosseumUAVEnvConfig,
@@ -16,9 +22,13 @@ __all__ = [
     "ColosseumUAVEnv",
     "ColosseumUAVEnvConfig",
     "ColosseumUAVState",
+    "ColosseumLidarUAVEnv",
+    "ColosseumLidarUAVEnvConfig",
     "ContinuousDynamicObstacle",
     "ContinuousDynamicUAVEnv",
     "DynamicGridUAVEnv",
     "DynamicObstacle",
     "GridUAVEnv",
+    "LidarEpisodeResetOptions",
+    "LidarResetError",
 ]
