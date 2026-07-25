@@ -31,6 +31,10 @@ The current project demonstrates:
 - M13.3 deterministic static-course generation with conservative 3D voxel
   occupancy, bounded solvability rejection, and reproducible 3D A* reference
   paths across training and held-out profiles.
+- M13.4 fixed-size LiDAR extraction with 24-by-3 sensor-local sectors, an opt-in
+  83-value environment observation, bounded sensor-failure handling, an accepted
+  grounded live probe, accepted known-geometry distance evidence, and an accepted
+  airborne observation smoke test with named cleanup.
 
 ## Current M12 Baseline
 
@@ -63,8 +67,7 @@ implemented in the current repository.
 ## Current Limitations And M13 Direction
 
 M13 is moving toward obstacle-aware 3D navigation. M13.1 validates raw LiDAR and
-temporary scene-mutation capabilities but does not integrate them into a
-navigation environment or policy. M13.2 now validates deterministic live scene
+temporary scene-mutation capabilities. M13.2 now validates deterministic live scene
 materialization, same-seed reset, exact cleanup, and optional start-anchor
 positioning. M13.3 now rejects impossible configured static courses offline and
 records deterministic 3D A* reference paths before optional simulator use.
@@ -72,16 +75,19 @@ Physical collision response remains unverified, and the proof does not include
 undocumented built-in Blocks geometry. The current repository does not yet
 include:
 
-- LiDAR observations in a Gymnasium environment or learned policy.
+- A trained obstacle-aware policy using the opt-in LiDAR observations.
 - Camera or depth perception.
-- obstacle-aware Colosseum Gymnasium environments.
 - occupancy built from live LiDAR.
 - curriculum training or replay-buffer resume.
 - dynamic obstacle avoidance in Colosseum.
 
 M13.3 is the next milestone after M13.2 in the roadmap and is now complete.
-M13.4 is the current next milestone. It can use the completed M13.3 static-course
-and reference-path evidence without changing the completed M12 interfaces.
+M13.4 is complete: grounded extraction, one known-geometry comparison, and a
+bounded airborne observation smoke test are live-validated. The legacy M12
+environment remains a 10-value observation; the opt-in LiDAR environment adds 72
+sector distances and one validity flag without exposing M13.3 obstacle
+coordinates or reference paths. No obstacle-aware policy has been trained.
+M13.5 is the next milestone.
 
 ## Tech Stack
 
@@ -110,6 +116,7 @@ and reference-path evidence without changing the completed M12 interfaces.
 - [M13.1 Colosseum capability probe](docs/m13_colosseum_capability_probe.md)
 - [M13.2 deterministic scene specification](docs/m13_2_scene_specification.md)
 - [M13.3 static-course solvability](docs/m13_3_static_course_solvability.md)
+- [M13.4 LiDAR feature extraction](docs/m13_4_lidar_feature_extraction.md)
 
 ## Project Structure
 
@@ -119,6 +126,7 @@ r1-UAV-navigation/
 |   |-- env/
 |   |-- planning/
 |   |-- scenes/
+|   |-- sensing/
 |   `-- training/
 |-- docs/
 |   `-- results/

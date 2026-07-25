@@ -24,6 +24,8 @@ from r1_uav_nav.sim.colosseum_scene import (
     OwnershipManifest,
     OwnershipManifestError,
     SceneLifecycleError,
+    StartAnchorCallbackReturnError,
+    StartAnchorCallbackTimeout,
     VehiclePositioningConfig,
     cleanup_scene_resources,
     load_ownership_manifest,
@@ -218,6 +220,10 @@ class FakeClient:
 
     def simFlushPersistentMarkers(self) -> None:
         self.logs.append(("flush",))
+
+    def getLidarData(self, lidar_name: str, vehicle_name: str) -> SimpleNamespace:
+        self.logs.append(("lidar", lidar_name, vehicle_name))
+        return SimpleNamespace(point_cloud=[2.0, 0.0, 0.0], time_stamp=1)
 
     def enableApiControl(self, enabled: bool, *, vehicle_name: str) -> None:
         self.logs.append(("api", enabled, vehicle_name))
@@ -1783,3 +1789,169 @@ def test_manifest_serialization_records_exact_ownership(tmp_path: Path) -> None:
     assert raw["entries"][0]["requested_name"] == "owned"
     assert raw["entries"][0]["returned_name"] == "owned"
     assert raw["entries"][0]["creation_status"] == "created"
+
+
+def test_start_anchor_callback_success_is_bounded_and_reported(
+    tmp_path: Path,
+) -> None:
+    client = FakeClient()
+    manager = ColosseumSceneManager(
+        client,
+        FAKE_MODULE,
+        _accepted_catalog(),
+        ownership_dir=tmp_path,
+        sleep_fn=lambda _seconds: None,
+    )
+    materialized, runtime = manager.materialize(_scene(), _config())
+
+    evidence = position_vehicle_at_start_and_return(
+        client,
+        FAKE_MODULE,
+        materialized,
+        runtime,
+        VehiclePositioningConfig(
+            allow_flight=True,
+            allow_start_positioning=True,
+            confirm_clear_airspace=True,
+            confirm_no_visible_collision=True,
+        ),
+        start_anchor_callback=lambda context: {
+            "timestamp": context.read_lidar().time_stamp
+        },
+    )
+
+    callback = evidence["start_anchor_callback"]
+    assert callback["status"] == "succeeded"
+    assert callback["samples_read"] == 1
+    assert callback["result"] == {"timestamp": 1}
+    assert evidence["landing_confirmed"]
+    assert ("lidar", "LidarSensor1", "SimpleFlight") in client.logs
+
+
+@pytest.mark.parametrize(
+    ("error_factory", "error_type", "status"),
+    [
+        (lambda: RuntimeError("callback failed"), RuntimeError, "failed"),
+        (lambda: KeyboardInterrupt(), KeyboardInterrupt, "interrupted"),
+    ],
+)
+def test_start_anchor_callback_failure_returns_before_propagation(
+    tmp_path: Path,
+    error_factory,
+    error_type,
+    status: str,
+) -> None:
+    client = FakeClient()
+    manager = ColosseumSceneManager(
+        client,
+        FAKE_MODULE,
+        _accepted_catalog(),
+        ownership_dir=tmp_path,
+        sleep_fn=lambda _seconds: None,
+    )
+    materialized, runtime = manager.materialize(_scene(), _config())
+
+    def fail_callback(_context):
+        raise error_factory()
+
+    with pytest.raises(error_type):
+        position_vehicle_at_start_and_return(
+            client,
+            FAKE_MODULE,
+            materialized,
+            runtime,
+            VehiclePositioningConfig(
+                allow_flight=True,
+                allow_start_positioning=True,
+                confirm_clear_airspace=True,
+                confirm_no_visible_collision=True,
+            ),
+            start_anchor_callback=fail_callback,
+        )
+
+    assert (
+        runtime.vehicle_positioning_evidence["start_anchor_callback"]["status"]
+        == status
+    )
+    assert ("land", "SimpleFlight") in client.logs
+    assert ("arm", False, "SimpleFlight") in client.logs
+    assert ("api", False, "SimpleFlight") in client.logs
+
+
+def test_start_anchor_callback_timeout_still_returns_safely(tmp_path: Path) -> None:
+    client = FakeClient()
+    manager = ColosseumSceneManager(
+        client,
+        FAKE_MODULE,
+        _accepted_catalog(),
+        ownership_dir=tmp_path,
+        sleep_fn=lambda _seconds: None,
+    )
+    materialized, runtime = manager.materialize(_scene(), _config())
+    times = iter((0.0, 6.0))
+
+    with pytest.raises(StartAnchorCallbackTimeout):
+        position_vehicle_at_start_and_return(
+            client,
+            FAKE_MODULE,
+            materialized,
+            runtime,
+            VehiclePositioningConfig(
+                allow_flight=True,
+                allow_start_positioning=True,
+                confirm_clear_airspace=True,
+                confirm_no_visible_collision=True,
+                start_anchor_callback_timeout_s=5.0,
+            ),
+            start_anchor_callback=lambda context: context.read_lidar(),
+            clock=lambda: next(times, 6.0),
+        )
+
+    callback = runtime.vehicle_positioning_evidence["start_anchor_callback"]
+    assert callback["status"] == "failed"
+    assert callback["samples_read"] == 0
+    assert runtime.vehicle_positioning_evidence["landing_confirmed"]
+
+
+def test_callback_and_return_failures_preserve_both_errors(tmp_path: Path) -> None:
+    client = FakeClient()
+    manager = ColosseumSceneManager(
+        client,
+        FAKE_MODULE,
+        _accepted_catalog(),
+        ownership_dir=tmp_path,
+        sleep_fn=lambda _seconds: None,
+    )
+    materialized, runtime = manager.materialize(_scene(), _config())
+    original_move = client.moveToPositionAsync
+    move_count = 0
+
+    def fail_return(*args, **kwargs):
+        nonlocal move_count
+        move_count += 1
+        if move_count == 3:
+            raise RuntimeError("return failed")
+        return original_move(*args, **kwargs)
+
+    client.moveToPositionAsync = fail_return
+
+    with pytest.raises(StartAnchorCallbackReturnError) as captured:
+        position_vehicle_at_start_and_return(
+            client,
+            FAKE_MODULE,
+            materialized,
+            runtime,
+            VehiclePositioningConfig(
+                allow_flight=True,
+                allow_start_positioning=True,
+                confirm_clear_airspace=True,
+                confirm_no_visible_collision=True,
+            ),
+            start_anchor_callback=lambda _context: (_ for _ in ()).throw(
+                ValueError("callback failed")
+            ),
+        )
+
+    assert isinstance(captured.value.callback_error, ValueError)
+    assert isinstance(captured.value.return_error, RuntimeError)
+    assert runtime.cleanup_state.airborne
