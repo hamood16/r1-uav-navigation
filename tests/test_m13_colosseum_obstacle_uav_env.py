@@ -86,6 +86,7 @@ class FakeInnerEnvironment:
         self.lifecycle_evidence: dict[str, Any] = {
             "cleanup_attempts": ({"landing_confirmed": True},)
         }
+        self.last_lidar_result = None
 
     def reset(
         self,
@@ -377,6 +378,24 @@ def test_reset_and_step_preserve_observation_and_info_contracts() -> None:
     assert info["reward_breakdown"]["total"] == pytest.approx(reward)
     assert factory.instances[-1].actions[0].dtype == np.float32
     assert ("forbidden-reset",) not in client.calls
+
+
+def test_reference_controller_helpers_are_read_only_and_sanitized() -> None:
+    env, _, _, _ = _external_environment()
+    env.reset(seed=17, options=_external_options())
+
+    spec = env.controller_state_spec()
+    navigation = env.inner_env.config.navigation
+
+    assert spec.goal_displacement_scales_m[0] == pytest.approx(
+        2.0 * navigation.workspace_xy_limit
+    )
+    assert spec.velocity_scales_m_s == (
+        navigation.max_horizontal_velocity,
+        navigation.max_horizontal_velocity,
+        navigation.max_vertical_velocity,
+    )
+    assert env.latest_lidar_evidence() is None
 
 
 class _CheckableEndpointEnvironment(ColosseumObstacleUAVEnv):

@@ -1,0 +1,77 @@
+schema_version: 1
+vehicle_name: SimpleFlight
+lidar_name: LidarSensor1
+client_module: airsim
+course_suite_path: configs/planning/m13_3_voxel_astar.yaml
+obstacle_env_config_path: configs/env/m13_5_obstacle_uav_env.yaml
+lidar_config_path: configs/sensing/m13_4_lidar_features.yaml
+report_directory: results/reports/m13/reference_controllers
+
+runtime:
+  control_duration_s: 0.20
+  max_horizontal_velocity_m_s: 0.50
+  max_vertical_velocity_m_s: 0.40
+  episode_step_limit: 250
+  watchdog_timeout_s: 120.0
+  clearance_abort_m: 1.0
+
+direct:
+  proportional_gain: 1.0
+  velocity_damping: 0.15
+  cruise_speed_m_s: 0.50
+  slowdown_radius_m: 1.0
+
+oracle:
+  maximum_segment_length_m: 1.0
+  waypoint_tolerance_m: 0.30
+  proportional_gain: 1.0
+  velocity_damping: 0.15
+  cruise_speed_m_s: 0.40
+  collinearity_tolerance: 0.00000001
+
+required_matrix:
+  - controller_id: direct
+    course_profile: empty
+    base_seed: 0
+    expected_outcome: goal_success
+  - controller_id: oracle
+    course_profile: empty
+    base_seed: 0
+    expected_outcome: goal_success
+  - controller_id: direct
+    course_profile: easy
+    base_seed: 1100
+    expected_outcome: goal_success
+  - controller_id: oracle
+    course_profile: easy
+    base_seed: 1100
+    expected_outcome: goal_success
+  - controller_id: direct
+    course_profile: medium
+    base_seed: 2100
+    expected_outcome: baseline_failure
+  - controller_id: oracle
+    course_profile: medium
+    base_seed: 2100
+    expected_outcome: goal_success
+  - controller_id: random
+    course_profile: medium
+    base_seed: 2100
+    controller_seed: 1360
+    expected_outcome: baseline_failure
+  - controller_id: random
+    course_profile: medium
+    base_seed: 2100
+    controller_seed: 1361
+    expected_outcome: baseline_failure
+  - controller_id: random
+    course_profile: medium
+    base_seed: 2100
+    controller_seed: 1362
+    expected_outcome: baseline_failure
+
+optional_matrix:
+  - controller_id: oracle
+    course_profile: hard
+    base_seed: 3100
+    expected_outcome: goal_success
