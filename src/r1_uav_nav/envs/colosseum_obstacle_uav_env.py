@@ -43,6 +43,7 @@ from r1_uav_nav.sim.colosseum_scene import (
 from r1_uav_nav.sim.lidar_features import (
     LIDAR_OBSERVATION_SIZE,
     LidarFeatureConfig,
+    extraction_evidence,
     load_lidar_feature_config,
 )
 from r1_uav_nav.sim.scene_specification import (
@@ -587,6 +588,48 @@ class ColosseumObstacleUAVEnv(gym.Env[np.ndarray, np.ndarray]):
         )
         self.closed = True
         return self.last_cleanup_result
+
+    def controller_state_spec(self) -> Any:
+        """Expose immutable observation/action scales for scripted controllers."""
+        from r1_uav_nav.evaluation.reference_controllers import ControllerStateSpec
+
+        inner = self._require_inner()
+        candidate = inner.config
+        navigation = (
+            candidate.navigation
+            if isinstance(candidate, ColosseumLidarUAVEnvConfig)
+            else candidate
+        )
+        vertical_scale = max(
+            navigation.workspace_up_limit,
+            navigation.workspace_down_limit,
+        )
+        return ControllerStateSpec(
+            position_scales_m=(
+                navigation.workspace_xy_limit,
+                navigation.workspace_xy_limit,
+                vertical_scale,
+            ),
+            goal_displacement_scales_m=(
+                2.0 * navigation.workspace_xy_limit,
+                2.0 * navigation.workspace_xy_limit,
+                navigation.workspace_up_limit + navigation.workspace_down_limit,
+            ),
+            velocity_scales_m_s=(
+                navigation.max_horizontal_velocity,
+                navigation.max_horizontal_velocity,
+                navigation.max_vertical_velocity,
+            ),
+        )
+
+    def latest_lidar_evidence(self) -> dict[str, Any] | None:
+        """Return sanitized current LiDAR evidence without raw scan payloads."""
+        result = self._require_inner().last_lidar_result
+        if result is None:
+            return None
+        evidence = extraction_evidence(result)
+        evidence.pop("sector_values", None)
+        return evidence
 
     def _resolve_course(
         self,

@@ -39,6 +39,10 @@ The current project demonstrates:
   composes the validated LiDAR lifecycle with deterministic solvable courses,
   configurable safety rewards, exact workspace checks, episode metrics, and
   ordered scene cleanup. Its current acceptance evidence is fake-client/offline.
+- M13.6 tooling provides offline-tested random and direct non-privileged
+  baselines, a privileged A* waypoint reference controller, a strictly gated
+  one-episode runner, and sanitized suite reporting. Supervised live evidence is
+  pending.
 
 ## Current M12 Baseline
 
@@ -85,14 +89,16 @@ include:
 - curriculum training or replay-buffer resume.
 - dynamic obstacle avoidance in Colosseum.
 
-M13.3 is the next milestone after M13.2 in the roadmap and is now complete.
 M13.4 is complete: grounded extraction, one known-geometry comparison, and a
 bounded airborne observation smoke test are live-validated. The legacy M12
 environment remains a 10-value observation; the opt-in LiDAR environment adds 72
 sector distances and one validity flag without exposing M13.3 obstacle
 coordinates or reference paths. No obstacle-aware policy has been trained.
-M13.5 is the next milestone and its Phase A environment is implemented. A
-supervised M13.5 smoke validation and policy training remain future work.
+M13.3 is the next milestone after M13.2 in the roadmap sequence and is complete.
+M13.5 is the next milestone after M13.4 in that sequence, and its Phase A
+environment is implemented. M13.6 reference-controller software is also
+implemented with fake-client/offline evidence. Supervised M13.6 course runs and
+later obstacle-aware policy training remain future work.
 
 ## Tech Stack
 
@@ -123,12 +129,14 @@ supervised M13.5 smoke validation and policy training remain future work.
 - [M13.3 static-course solvability](docs/m13_3_static_course_solvability.md)
 - [M13.4 LiDAR feature extraction](docs/m13_4_lidar_feature_extraction.md)
 - [M13.5 obstacle-aware Gymnasium environment](docs/m13_5_obstacle_aware_gym_env.md)
+- [M13.6 scripted reference controllers](docs/m13_6_scripted_reference_controllers.md)
 
 ## Project Structure
 
 ```text
 r1-UAV-navigation/
 |-- configs/
+|   |-- evaluation/
 |   |-- env/
 |   |-- planning/
 |   |-- scenes/
