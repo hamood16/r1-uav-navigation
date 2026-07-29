@@ -1,0 +1,53 @@
+schema_version: 1
+experiment_name: m13_7_long_run_td3
+algorithm: td3
+seed: 1370
+device: cpu
+policy: MlpPolicy
+additional_timesteps: 100
+learning_rate: 0.0003
+buffer_size: 10000
+learning_starts: 20
+batch_size: 16
+gamma: 0.99
+tau: 0.005
+train_freq: 1
+gradient_steps: 1
+policy_delay: 2
+target_policy_noise: 0.2
+target_noise_clip: 0.5
+action_noise_std: [0.15, 0.15, 0.05]
+policy_hidden_layers: [256, 256]
+checkpoint_interval_steps: 1000
+course_suite_path: configs/planning/m13_3_voxel_astar.yaml
+obstacle_environment_config_path: configs/env/m13_5_obstacle_uav_env.yaml
+training_profile_ids: [easy, medium, hard]
+output:
+  model_root: results/trained_models/m13_7_long_run_td3
+  log_root: results/logs/m13_7_long_run_td3
+  report_root: results/reports/m13/training
+validation:
+  monitoring_interval_steps: 5000
+  promotion_interval_steps: 20000
+  episodes_per_case: 1
+  cleanup_hard_gate: true
+  monitoring_cases:
+    - profile_id: empty
+      base_seed: 0
+      episode_seed: 100000
+    - profile_id: easy
+      base_seed: 1100
+      episode_seed: 101100
+    - profile_id: medium
+      base_seed: 2100
+      episode_seed: 102100
+  promotion_cases:
+    - profile_id: empty
+      base_seed: 0
+      episode_seed: 200000
+    - profile_id: held-out-reverse
+      base_seed: 9100
+      episode_seed: 209100
+    - profile_id: held-out-elevated
+      base_seed: 10100
+      episode_seed: 210100

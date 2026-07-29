@@ -43,6 +43,10 @@ The current project demonstrates:
   baselines, a privileged A* waypoint reference controller, a strictly gated
   one-episode runner, and sanitized suite reporting. Supervised live evidence is
   pending.
+- M13.7 Phase A provides offline long-run TD3 infrastructure: immutable
+  model/replay/run-state bundles, strict resume and model-only warm start,
+  deterministic validation-based best checkpoints, heartbeat supervision
+  decisions, and throughput evidence. No long or live training has been run.
 
 ## Current M12 Baseline
 
@@ -86,7 +90,7 @@ include:
 - A trained obstacle-aware policy using the opt-in LiDAR observations.
 - Camera or depth perception.
 - occupancy built from live LiDAR.
-- curriculum training or replay-buffer resume.
+- curriculum training or a live-validated long-run resume.
 - dynamic obstacle avoidance in Colosseum.
 
 M13.4 is complete: grounded extraction, one known-geometry comparison, and a
@@ -98,7 +102,9 @@ M13.3 is the next milestone after M13.2 in the roadmap sequence and is complete.
 M13.5 is the next milestone after M13.4 in that sequence, and its Phase A
 environment is implemented. M13.6 reference-controller software is also
 implemented with fake-client/offline evidence. Supervised M13.6 course runs and
-later obstacle-aware policy training remain future work.
+later obstacle-aware policy training remain future work. M13.7 Phase A
+infrastructure is implemented offline; it does not demonstrate a trained
+obstacle-aware policy or a recovered live run.
 
 ## Tech Stack
 
@@ -130,6 +136,7 @@ later obstacle-aware policy training remain future work.
 - [M13.4 LiDAR feature extraction](docs/m13_4_lidar_feature_extraction.md)
 - [M13.5 obstacle-aware Gymnasium environment](docs/m13_5_obstacle_aware_gym_env.md)
 - [M13.6 scripted reference controllers](docs/m13_6_scripted_reference_controllers.md)
+- [M13.7 long-run training infrastructure](docs/m13_7_long_run_training_infrastructure.md)
 
 ## Project Structure
 
