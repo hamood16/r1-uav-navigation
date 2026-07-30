@@ -90,6 +90,9 @@ def test_committed_config_is_strict_and_uses_approved_validation_sets() -> None:
         ("held-out-elevated", 10100),
     ]
     assert config.validation.cleanup_hard_gate
+    assert config.curriculum_id is None
+    assert config.curriculum_config_digest is None
+    assert "curriculum_id" not in config.resolved_snapshot()
 
 
 def test_atomic_bundle_round_trip_and_latest_discovery(tmp_path: Path) -> None:

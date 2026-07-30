@@ -1,0 +1,191 @@
+schema_version: 1
+curriculum_id: m13-8-static-obstacle
+long_run_config_path: configs/training/m13_7_long_run_td3.yaml
+course_suites:
+  m13_3: configs/planning/m13_3_voxel_astar.yaml
+  m13_8: configs/planning/m13_8_curriculum_courses.yaml
+reserved_final_test_seeds: [9100, 9200, 9300, 10100, 10200, 10300]
+required_consecutive_passes: 3
+replay_on_promotion: preserve
+output:
+  model_root: results/trained_models/m13_8_static_curriculum
+  log_root: results/logs/m13_8_static_curriculum
+  report_root: results/reports/m13/curriculum
+stages:
+  - stage_id: stage-0
+    index: 0
+    description: LiDAR-compatible empty task
+    minimum_stage_steps: 500
+    maximum_stage_steps: 5000
+    validation_interval_steps: 500
+    training_courses:
+      - {suite_id: m13_8, profile_id: curriculum-empty-train, base_seed: 20000, role: training, difficulty: empty}
+    validation_courses:
+      - {suite_id: m13_8, profile_id: curriculum-empty-validation, base_seed: 20100, role: curriculum_validation, difficulty: empty}
+    gate:
+      minimum_episode_count: 20
+      minimum_success_rate: 0.95
+      maximum_collision_rate: 0.0
+      maximum_timeout_rate: 0.05
+      minimum_cleanup_success_rate: 1.0
+      maximum_safety_violation_rate: 0.0
+  - stage_id: stage-1
+    index: 1
+    description: Single fixed direct-route blocker
+    minimum_stage_steps: 5000
+    maximum_stage_steps: 20000
+    validation_interval_steps: 2000
+    training_courses:
+      - {suite_id: m13_8, profile_id: curriculum-blocker-train, base_seed: 21000, role: training, difficulty: medium}
+    validation_courses:
+      - {suite_id: m13_8, profile_id: curriculum-blocker-validation, base_seed: 21100, role: curriculum_validation, difficulty: medium}
+    gate:
+      minimum_episode_count: 20
+      minimum_success_rate: 0.90
+      maximum_collision_rate: 0.05
+      maximum_timeout_rate: 0.10
+      minimum_cleanup_success_rate: 1.0
+      maximum_safety_violation_rate: 0.05
+      minimum_non_straight_success_rate: 0.90
+      minimum_direct_success_advantage: 0.50
+  - stage_id: stage-2
+    index: 2
+    description: Easy and sparse blocked static courses
+    minimum_stage_steps: 10000
+    maximum_stage_steps: 50000
+    validation_interval_steps: 5000
+    training_courses:
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1100, role: training, difficulty: easy}
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1200, role: training, difficulty: easy}
+      - {suite_id: m13_8, profile_id: curriculum-sparse-train, base_seed: 22000, role: training, difficulty: medium}
+      - {suite_id: m13_8, profile_id: curriculum-sparse-train, base_seed: 22100, role: training, difficulty: medium}
+      - {suite_id: m13_8, profile_id: curriculum-sparse-train, base_seed: 22200, role: training, difficulty: medium}
+      - {suite_id: m13_8, profile_id: curriculum-sparse-train, base_seed: 22300, role: training, difficulty: medium}
+    validation_courses:
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1300, role: curriculum_validation, difficulty: easy}
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1400, role: curriculum_validation, difficulty: easy}
+      - {suite_id: m13_8, profile_id: curriculum-sparse-validation, base_seed: 22400, role: curriculum_validation, difficulty: medium}
+      - {suite_id: m13_8, profile_id: curriculum-sparse-validation, base_seed: 22500, role: curriculum_validation, difficulty: medium}
+    gate:
+      minimum_episode_count: 20
+      minimum_success_rate: 0.90
+      maximum_collision_rate: 0.05
+      maximum_timeout_rate: 0.10
+      minimum_cleanup_success_rate: 1.0
+      maximum_safety_violation_rate: 0.05
+      minimum_direct_success_advantage: 0.20
+  - stage_id: stage-3
+    index: 3
+    description: Random directional easy and medium layouts
+    minimum_stage_steps: 25000
+    maximum_stage_steps: 100000
+    validation_interval_steps: 10000
+    training_courses: &directional_training
+      - {suite_id: m13_8, profile_id: curriculum-forward-easy-train, base_seed: 30000, role: training, difficulty: easy, direction: forward}
+      - {suite_id: m13_8, profile_id: curriculum-forward-medium-train, base_seed: 30400, role: training, difficulty: medium, direction: forward}
+      - {suite_id: m13_8, profile_id: curriculum-reverse-easy-train, base_seed: 31000, role: training, difficulty: easy, direction: reverse}
+      - {suite_id: m13_8, profile_id: curriculum-reverse-medium-train, base_seed: 31400, role: training, difficulty: medium, direction: reverse}
+      - {suite_id: m13_8, profile_id: curriculum-lateral-easy-train, base_seed: 32000, role: training, difficulty: easy, direction: lateral}
+      - {suite_id: m13_8, profile_id: curriculum-lateral-medium-train, base_seed: 32400, role: training, difficulty: medium, direction: lateral}
+      - {suite_id: m13_8, profile_id: curriculum-elevated-easy-train, base_seed: 33000, role: training, difficulty: easy, direction: elevated}
+      - {suite_id: m13_8, profile_id: curriculum-elevated-medium-train, base_seed: 33400, role: training, difficulty: medium, direction: elevated}
+    validation_courses: &directional_validation
+      - {suite_id: m13_8, profile_id: curriculum-forward-easy-validation, base_seed: 35000, role: curriculum_validation, difficulty: easy, direction: forward}
+      - {suite_id: m13_8, profile_id: curriculum-forward-medium-validation, base_seed: 35400, role: curriculum_validation, difficulty: medium, direction: forward}
+      - {suite_id: m13_8, profile_id: curriculum-reverse-easy-validation, base_seed: 36000, role: curriculum_validation, difficulty: easy, direction: reverse}
+      - {suite_id: m13_8, profile_id: curriculum-reverse-medium-validation, base_seed: 36400, role: curriculum_validation, difficulty: medium, direction: reverse}
+      - {suite_id: m13_8, profile_id: curriculum-lateral-easy-validation, base_seed: 37000, role: curriculum_validation, difficulty: easy, direction: lateral}
+      - {suite_id: m13_8, profile_id: curriculum-lateral-medium-validation, base_seed: 37400, role: curriculum_validation, difficulty: medium, direction: lateral}
+      - {suite_id: m13_8, profile_id: curriculum-elevated-easy-validation, base_seed: 38000, role: curriculum_validation, difficulty: easy, direction: elevated}
+      - {suite_id: m13_8, profile_id: curriculum-elevated-medium-validation, base_seed: 38400, role: curriculum_validation, difficulty: medium, direction: elevated}
+    gate:
+      minimum_episode_count: 24
+      minimum_success_rate: 0.85
+      maximum_collision_rate: 0.08
+      maximum_timeout_rate: 0.10
+      minimum_cleanup_success_rate: 1.0
+      maximum_safety_violation_rate: 0.08
+      minimum_direct_success_advantage: 0.20
+      subgroup_minimum_success_rates:
+        forward: 0.75
+        reverse: 0.75
+        lateral: 0.75
+        elevated: 0.75
+  - stage_id: stage-4
+    index: 4
+    description: Mixed easy, medium, hard, and directional layouts
+    minimum_stage_steps: 50000
+    maximum_stage_steps: 200000
+    validation_interval_steps: 20000
+    training_courses:
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1100, role: training, difficulty: easy, weight: 0.30}
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1200, role: training, difficulty: easy, weight: 0.30}
+      - {suite_id: m13_3, profile_id: medium, base_seed: 2100, role: training, difficulty: medium, weight: 0.40}
+      - {suite_id: m13_3, profile_id: medium, base_seed: 2200, role: training, difficulty: medium, weight: 0.40}
+      - {suite_id: m13_3, profile_id: hard, base_seed: 3100, role: training, difficulty: hard, weight: 0.30}
+      - {suite_id: m13_3, profile_id: hard, base_seed: 3200, role: training, difficulty: hard, weight: 0.30}
+      - *directional_training
+    validation_courses:
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1300, role: curriculum_validation, difficulty: easy}
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1400, role: curriculum_validation, difficulty: easy}
+      - {suite_id: m13_3, profile_id: medium, base_seed: 2300, role: curriculum_validation, difficulty: medium}
+      - {suite_id: m13_3, profile_id: medium, base_seed: 2400, role: curriculum_validation, difficulty: medium}
+      - {suite_id: m13_3, profile_id: hard, base_seed: 3300, role: curriculum_validation, difficulty: hard}
+      - {suite_id: m13_3, profile_id: hard, base_seed: 3400, role: curriculum_validation, difficulty: hard}
+      - *directional_validation
+    sampling_levels:
+      - {level_id: initial, difficulty_weights: {easy: 0.60, medium: 0.30, hard: 0.10}}
+      - {level_id: intermediate, difficulty_weights: {easy: 0.45, medium: 0.35, hard: 0.20}}
+      - {level_id: final, difficulty_weights: {easy: 0.30, medium: 0.40, hard: 0.30}}
+    gate:
+      minimum_episode_count: 30
+      minimum_success_rate: 0.80
+      maximum_collision_rate: 0.10
+      maximum_timeout_rate: 0.10
+      minimum_cleanup_success_rate: 1.0
+      maximum_safety_violation_rate: 0.10
+      maximum_earlier_success_regression: 0.10
+      maximum_earlier_collision_regression: 0.05
+      subgroup_minimum_success_rates:
+        easy: 0.90
+        medium: 0.80
+        hard: 0.65
+  - stage_id: stage-5
+    index: 5
+    description: Offline robustness perturbation preparation
+    minimum_stage_steps: 50000
+    maximum_stage_steps: 200000
+    validation_interval_steps: 20000
+    training_courses:
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1100, role: training, difficulty: easy, weight: 0.30}
+      - {suite_id: m13_3, profile_id: medium, base_seed: 2100, role: training, difficulty: medium, weight: 0.40}
+      - {suite_id: m13_3, profile_id: hard, base_seed: 3100, role: training, difficulty: hard, weight: 0.30}
+      - *directional_training
+    validation_courses:
+      - {suite_id: m13_3, profile_id: easy, base_seed: 1300, role: curriculum_validation, difficulty: easy}
+      - {suite_id: m13_3, profile_id: medium, base_seed: 2300, role: curriculum_validation, difficulty: medium}
+      - {suite_id: m13_3, profile_id: hard, base_seed: 3300, role: curriculum_validation, difficulty: hard}
+      - *directional_validation
+    robustness:
+      lidar_noise_std_min: 0.0
+      lidar_noise_std_max: 0.02
+      sector_dropout_probability_min: 0.0
+      sector_dropout_probability_max: 0.05
+      velocity_response_scale_min: 0.90
+      velocity_response_scale_max: 1.10
+      control_duration_scale_min: 0.90
+      control_duration_scale_max: 1.10
+    gate:
+      minimum_episode_count: 30
+      minimum_success_rate: 0.75
+      maximum_collision_rate: 0.10
+      maximum_timeout_rate: 0.12
+      minimum_cleanup_success_rate: 1.0
+      maximum_safety_violation_rate: 0.10
+      maximum_sensor_failure_rate: 0.05
+      maximum_earlier_success_regression: 0.10
+      maximum_earlier_collision_regression: 0.05
+      subgroup_minimum_success_rates:
+        easy: 0.90
+        medium: 0.80
+        hard: 0.65

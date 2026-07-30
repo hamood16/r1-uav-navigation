@@ -119,6 +119,8 @@ class LongRunTD3Config:
     course_suite_path: str = "configs/planning/m13_3_voxel_astar.yaml"
     obstacle_environment_config_path: str = "configs/env/m13_5_obstacle_uav_env.yaml"
     training_profile_ids: tuple[str, ...] = ("easy", "medium", "hard")
+    curriculum_id: str | None = None
+    curriculum_config_digest: str | None = None
     output: LongRunOutputConfig = field(default_factory=LongRunOutputConfig)
     validation: LongRunValidationConfig = field(default_factory=LongRunValidationConfig)
 
@@ -191,14 +193,27 @@ class LongRunTD3Config:
             path = Path(value)
             if not value or path.is_absolute() or ".." in path.parts:
                 raise ValueError(f"{name} must be a repository-relative path")
+        curriculum_values = (self.curriculum_id, self.curriculum_config_digest)
+        if (curriculum_values[0] is None) != (curriculum_values[1] is None):
+            raise ValueError(
+                "curriculum_id and curriculum_config_digest must be set together"
+            )
+        if self.curriculum_id is not None:
+            if (
+                not self.curriculum_id
+                or self.curriculum_id != self.curriculum_id.strip()
+            ):
+                raise ValueError("curriculum_id must not be empty or padded")
+            if len(self.curriculum_config_digest or "") != 64:
+                raise ValueError("curriculum_config_digest must be SHA-256")
 
     @property
     def full_config_digest(self) -> str:
-        return canonical_digest(asdict(self))
+        return canonical_digest(self.resolved_snapshot())
 
     @property
     def compatibility_digest(self) -> str:
-        compatible = asdict(self)
+        compatible = self.resolved_snapshot()
         compatible.pop("additional_timesteps")
         compatible.pop("checkpoint_interval_steps")
         compatible.pop("output")
@@ -208,7 +223,11 @@ class LongRunTD3Config:
         return canonical_digest(compatible)
 
     def resolved_snapshot(self) -> dict[str, Any]:
-        return _jsonable(asdict(self))
+        values = _jsonable(asdict(self))
+        if self.curriculum_id is None:
+            values.pop("curriculum_id")
+            values.pop("curriculum_config_digest")
+        return values
 
 
 @dataclass(frozen=True)
@@ -240,6 +259,7 @@ class SafeCheckpointCallback(BaseCallback):
         parent_run_id: str | None = None,
         warm_start_source_model_digest: str | None = None,
         course_pool: Sequence[Mapping[str, Any]] | None = None,
+        curriculum_state_provider: Callable[[], Mapping[str, Any]] | None = None,
         heartbeat_path: Path | None = None,
         worker_id: str = "phase-a-worker",
         verbose: int = 0,
@@ -262,6 +282,7 @@ class SafeCheckpointCallback(BaseCallback):
         self.parent_run_id = parent_run_id
         self.warm_start_source_model_digest = warm_start_source_model_digest
         self.course_pool = tuple(dict(item) for item in (course_pool or ()))
+        self.curriculum_state_provider = curriculum_state_provider
         self._checkpoint_due = False
         self.latest_checkpoint: SafeCheckpoint | None = None
         self.last_info: dict[str, Any] = {}
@@ -333,6 +354,16 @@ class SafeCheckpointCallback(BaseCallback):
                 self.course_pool
                 if self.course_pool
                 else sorted(self.config.training_profile_ids)
+            ),
+            curriculum_state=(
+                dict(self.curriculum_state_provider())
+                if self.curriculum_state_provider is not None
+                else {
+                    "schema_version": 1,
+                    "stage_id": "none",
+                    "completed_stages": [],
+                    "progress": 0.0,
+                }
             ),
             episode_in_progress=self.last_info.get("termination_reason") is None,
             deterministic_resume_guaranteed=False,
@@ -410,6 +441,8 @@ def load_long_run_td3_config(path: Path) -> LongRunTD3Config:
         "course_suite_path",
         "obstacle_environment_config_path",
         "training_profile_ids",
+        "curriculum_id",
+        "curriculum_config_digest",
         "output",
         "validation",
     }
@@ -482,6 +515,7 @@ def run_fake_td3_smoke(
     run_id: str | None = None,
     additional_timesteps: int | None = None,
     env_factory: Callable[[], gym.Env] | None = None,
+    curriculum_state_provider: Callable[[], Mapping[str, Any]] | None = None,
 ) -> LongRunTrainingResult:
     """Run a tiny CPU-only TD3 checkpoint/resume cycle without AirSim."""
     timesteps = (
@@ -561,6 +595,16 @@ def run_fake_td3_smoke(
         ),
         next_checkpoint_step=(
             initial_timesteps + effective_config.checkpoint_interval_steps
+        ),
+        curriculum_state_provider=(
+            curriculum_state_provider
+            if curriculum_state_provider is not None
+            else (
+                (lambda: dict(source_state.curriculum_state))
+                if source_state is not None
+                and source_state.curriculum_state.get("stage_id") != "none"
+                else None
+            )
         ),
     )
     try:

@@ -155,8 +155,7 @@ class LongRunRunState:
             not math.isfinite(float(value)) for value in self.best_validation_rank
         ):
             raise ValueError("best_validation_rank values must be finite")
-        if self.curriculum_state.get("stage_id") != "none":
-            raise ValueError("Phase A curriculum stage must remain 'none'")
+        _validate_curriculum_state(self.curriculum_state)
 
     def to_dict(self) -> dict[str, Any]:
         """Return stable JSON-compatible run-state evidence."""
@@ -172,6 +171,52 @@ class LongRunRunState:
         values["course_pool"] = tuple(values.get("course_pool", ()))
         values["supervisor_events"] = tuple(values.get("supervisor_events", ()))
         return cls(**values)
+
+
+def _validate_curriculum_state(value: Mapping[str, Any]) -> None:
+    if not isinstance(value, Mapping):
+        raise ValueError("curriculum_state must be a mapping")
+    stage_id = value.get("stage_id")
+    if stage_id == "none":
+        if value.get("schema_version") != 1:
+            raise ValueError("legacy curriculum state must use schema version 1")
+        return
+    required = {
+        "schema_version",
+        "curriculum_id",
+        "curriculum_config_digest",
+        "stage_id",
+        "stage_index",
+        "status",
+        "stage_start_global_timestep",
+        "stage_completed_timesteps",
+        "sampling_level_index",
+        "consecutive_pass_count",
+        "completed_stage_ids",
+        "validation_history",
+        "best_validation_by_stage",
+    }
+    missing = required - set(value)
+    if missing:
+        raise ValueError(
+            f"curriculum_state is missing required fields: {sorted(missing)}"
+        )
+    if value.get("schema_version") != 1:
+        raise ValueError("unsupported curriculum-state schema")
+    if len(str(value.get("curriculum_config_digest", ""))) != 64:
+        raise ValueError("curriculum config digest must be SHA-256")
+    if value.get("status") not in {"active", "promoted", "blocked", "complete"}:
+        raise ValueError("unsupported curriculum status")
+    for name in (
+        "stage_index",
+        "stage_start_global_timestep",
+        "stage_completed_timesteps",
+        "sampling_level_index",
+        "consecutive_pass_count",
+    ):
+        item = value.get(name)
+        if not isinstance(item, int) or isinstance(item, bool) or item < 0:
+            raise ValueError(f"curriculum {name} must be a non-negative integer")
 
 
 @dataclass(frozen=True)

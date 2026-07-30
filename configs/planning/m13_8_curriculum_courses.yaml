@@ -1,0 +1,265 @@
+schema_version: 1
+planner:
+  schema_version: 1
+  resolution_m: 0.25
+  uav_collision_radius_m: 0.35
+  additional_safety_margin_m: 0.15
+  total_clearance_m: 0.50
+  connectivity: 26
+  max_voxels: 1000000
+  max_expansions: 250000
+profiles:
+  - profile_id: curriculum-empty-train
+    difficulty: empty
+    split: training
+    scene_config: configs/scenes/m13_8_empty.yaml
+    base_seeds: [20000]
+    max_candidate_attempts: 1
+    constraints: &empty_constraints
+      obstacle_count_min: 0
+      obstacle_count_max: 0
+      direct_line_clear: true
+      path_efficiency_min: 0.95
+      path_efficiency_max: 1.0
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 0.25
+      required_x_direction: positive
+  - profile_id: curriculum-empty-validation
+    difficulty: empty
+    split: validation
+    scene_config: configs/scenes/m13_8_empty.yaml
+    base_seeds: [20100]
+    max_candidate_attempts: 1
+    constraints: *empty_constraints
+  - profile_id: curriculum-blocker-train
+    difficulty: medium
+    split: training
+    scene_config: configs/scenes/m13_8_single_blocker.yaml
+    base_seeds: [21000]
+    max_candidate_attempts: 1
+    constraints: &blocker_constraints
+      obstacle_count_min: 1
+      obstacle_count_max: 1
+      direct_line_clear: false
+      path_efficiency_min: 0.50
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 5.0
+      required_structure_prefixes: [curriculum-blocker]
+      required_x_direction: positive
+  - profile_id: curriculum-blocker-validation
+    difficulty: medium
+    split: validation
+    scene_config: configs/scenes/m13_8_single_blocker.yaml
+    base_seeds: [21100]
+    max_candidate_attempts: 1
+    constraints: *blocker_constraints
+  - profile_id: curriculum-sparse-train
+    difficulty: medium
+    split: training
+    scene_config: configs/scenes/m13_8_sparse_blocked.yaml
+    base_seeds: [22000, 22100, 22200, 22300]
+    max_candidate_attempts: 32
+    constraints: &sparse_constraints
+      obstacle_count_min: 3
+      obstacle_count_max: 3
+      direct_line_clear: false
+      path_efficiency_min: 0.45
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 5.0
+      required_structure_prefixes: [sparse-blocker]
+      required_x_direction: positive
+  - profile_id: curriculum-sparse-validation
+    difficulty: medium
+    split: validation
+    scene_config: configs/scenes/m13_8_sparse_blocked.yaml
+    base_seeds: [22400, 22500]
+    max_candidate_attempts: 32
+    constraints: *sparse_constraints
+  - profile_id: curriculum-forward-easy-train
+    difficulty: easy
+    split: training
+    scene_config: configs/scenes/m13_8_forward_easy.yaml
+    base_seeds: [30000, 30100]
+    max_candidate_attempts: 32
+    constraints: &forward_easy_constraints
+      obstacle_count_min: 3
+      obstacle_count_max: 3
+      direct_line_clear: true
+      path_efficiency_min: 0.80
+      path_efficiency_max: 1.0
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 0.5
+      required_x_direction: positive
+  - profile_id: curriculum-forward-easy-validation
+    difficulty: easy
+    split: validation
+    scene_config: configs/scenes/m13_8_forward_easy.yaml
+    base_seeds: [35000]
+    max_candidate_attempts: 32
+    constraints: *forward_easy_constraints
+  - profile_id: curriculum-forward-medium-train
+    difficulty: medium
+    split: training
+    scene_config: configs/scenes/m13_8_forward_medium.yaml
+    base_seeds: [30400, 30500]
+    max_candidate_attempts: 32
+    constraints: &forward_medium_constraints
+      obstacle_count_min: 5
+      obstacle_count_max: 5
+      direct_line_clear: false
+      path_efficiency_min: 0.45
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 5.0
+      required_structure_prefixes: [forward-blocker]
+      required_x_direction: positive
+  - profile_id: curriculum-forward-medium-validation
+    difficulty: medium
+    split: validation
+    scene_config: configs/scenes/m13_8_forward_medium.yaml
+    base_seeds: [35400]
+    max_candidate_attempts: 32
+    constraints: *forward_medium_constraints
+  - profile_id: curriculum-reverse-easy-train
+    difficulty: easy
+    split: training
+    scene_config: configs/scenes/m13_8_reverse_easy.yaml
+    base_seeds: [31000, 31100]
+    max_candidate_attempts: 32
+    constraints: &reverse_easy_constraints
+      obstacle_count_min: 3
+      obstacle_count_max: 3
+      direct_line_clear: true
+      path_efficiency_min: 0.80
+      path_efficiency_max: 1.0
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 0.5
+      required_x_direction: negative
+  - profile_id: curriculum-reverse-easy-validation
+    difficulty: easy
+    split: validation
+    scene_config: configs/scenes/m13_8_reverse_easy.yaml
+    base_seeds: [36000]
+    max_candidate_attempts: 32
+    constraints: *reverse_easy_constraints
+  - profile_id: curriculum-reverse-medium-train
+    difficulty: medium
+    split: training
+    scene_config: configs/scenes/m13_8_reverse_medium.yaml
+    base_seeds: [31400, 31500]
+    max_candidate_attempts: 32
+    constraints: &reverse_medium_constraints
+      obstacle_count_min: 5
+      obstacle_count_max: 5
+      direct_line_clear: false
+      path_efficiency_min: 0.45
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 5.0
+      required_structure_prefixes: [reverse-blocker]
+      required_x_direction: negative
+  - profile_id: curriculum-reverse-medium-validation
+    difficulty: medium
+    split: validation
+    scene_config: configs/scenes/m13_8_reverse_medium.yaml
+    base_seeds: [36400]
+    max_candidate_attempts: 32
+    constraints: *reverse_medium_constraints
+  - profile_id: curriculum-lateral-easy-train
+    difficulty: easy
+    split: training
+    scene_config: configs/scenes/m13_8_lateral_easy.yaml
+    base_seeds: [32000, 32100]
+    max_candidate_attempts: 32
+    constraints: &lateral_easy_constraints
+      obstacle_count_min: 3
+      obstacle_count_max: 3
+      direct_line_clear: true
+      path_efficiency_min: 0.80
+      path_efficiency_max: 1.0
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 0.5
+      required_x_direction: any
+      require_lateral_direction: true
+  - profile_id: curriculum-lateral-easy-validation
+    difficulty: easy
+    split: validation
+    scene_config: configs/scenes/m13_8_lateral_easy.yaml
+    base_seeds: [37000]
+    max_candidate_attempts: 32
+    constraints: *lateral_easy_constraints
+  - profile_id: curriculum-lateral-medium-train
+    difficulty: medium
+    split: training
+    scene_config: configs/scenes/m13_8_lateral_medium.yaml
+    base_seeds: [32400, 32500]
+    max_candidate_attempts: 32
+    constraints: &lateral_medium_constraints
+      obstacle_count_min: 5
+      obstacle_count_max: 5
+      direct_line_clear: false
+      path_efficiency_min: 0.45
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 0.0
+      vertical_excursion_max_m: 5.0
+      required_structure_prefixes: [lateral-blocker]
+      required_x_direction: any
+      require_lateral_direction: true
+  - profile_id: curriculum-lateral-medium-validation
+    difficulty: medium
+    split: validation
+    scene_config: configs/scenes/m13_8_lateral_medium.yaml
+    base_seeds: [37400]
+    max_candidate_attempts: 32
+    constraints: *lateral_medium_constraints
+  - profile_id: curriculum-elevated-easy-train
+    difficulty: easy
+    split: training
+    scene_config: configs/scenes/m13_8_elevated_easy.yaml
+    base_seeds: [33000, 33100]
+    max_candidate_attempts: 32
+    constraints: &elevated_easy_constraints
+      obstacle_count_min: 3
+      obstacle_count_max: 3
+      direct_line_clear: true
+      path_efficiency_min: 0.75
+      path_efficiency_max: 1.0
+      vertical_excursion_min_m: 1.0
+      vertical_excursion_max_m: 5.0
+      required_x_direction: positive
+      require_lateral_direction: true
+      minimum_goal_above_start_m: 1.0
+  - profile_id: curriculum-elevated-easy-validation
+    difficulty: easy
+    split: validation
+    scene_config: configs/scenes/m13_8_elevated_easy.yaml
+    base_seeds: [38000]
+    max_candidate_attempts: 32
+    constraints: *elevated_easy_constraints
+  - profile_id: curriculum-elevated-medium-train
+    difficulty: medium
+    split: training
+    scene_config: configs/scenes/m13_8_elevated_medium.yaml
+    base_seeds: [33400, 33500]
+    max_candidate_attempts: 32
+    constraints: &elevated_medium_constraints
+      obstacle_count_min: 5
+      obstacle_count_max: 5
+      direct_line_clear: false
+      path_efficiency_min: 0.45
+      path_efficiency_max: 0.95
+      vertical_excursion_min_m: 1.0
+      vertical_excursion_max_m: 5.0
+      required_structure_prefixes: [elevated-blocker]
+      required_x_direction: positive
+      require_lateral_direction: true
+      minimum_goal_above_start_m: 1.0
+  - profile_id: curriculum-elevated-medium-validation
+    difficulty: medium
+    split: validation
+    scene_config: configs/scenes/m13_8_elevated_medium.yaml
+    base_seeds: [38400]
+    max_candidate_attempts: 32
+    constraints: *elevated_medium_constraints
