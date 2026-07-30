@@ -38,7 +38,7 @@ def test_help_and_import_are_simulator_independent(
     assert exit_info.value.code == 0
 
 
-def test_preview_exposes_no_live_command(
+def test_preview_exposes_gated_phase_b_commands(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     module = _load_script("m13_8_cli_preview")
@@ -49,6 +49,10 @@ def test_preview_exposes_no_live_command(
         "fake-smoke",
         "summarize",
         "inspect-curriculum-state",
+        "preflight-live-pilot",
+        "pilot-stage",
+        "resume-pilot",
+        "summarize-live-pilot",
     }
     assert module.run(module.parse_args(["preview-stages"]), repository_root=ROOT) == 0
     output = capsys.readouterr().out

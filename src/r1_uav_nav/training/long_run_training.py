@@ -121,6 +121,7 @@ class LongRunTD3Config:
     training_profile_ids: tuple[str, ...] = ("easy", "medium", "hard")
     curriculum_id: str | None = None
     curriculum_config_digest: str | None = None
+    execution_metadata: dict[str, Any] | None = None
     output: LongRunOutputConfig = field(default_factory=LongRunOutputConfig)
     validation: LongRunValidationConfig = field(default_factory=LongRunValidationConfig)
 
@@ -206,6 +207,13 @@ class LongRunTD3Config:
                 raise ValueError("curriculum_id must not be empty or padded")
             if len(self.curriculum_config_digest or "") != 64:
                 raise ValueError("curriculum_config_digest must be SHA-256")
+        if self.execution_metadata is not None:
+            if not isinstance(self.execution_metadata, dict):
+                raise ValueError("execution_metadata must be a mapping")
+            if not self.execution_metadata:
+                raise ValueError("execution_metadata must not be empty")
+            # Validate JSON compatibility now so checkpointing cannot fail late.
+            canonical_digest(self.execution_metadata)
 
     @property
     def full_config_digest(self) -> str:
@@ -227,6 +235,8 @@ class LongRunTD3Config:
         if self.curriculum_id is None:
             values.pop("curriculum_id")
             values.pop("curriculum_config_digest")
+        if self.execution_metadata is None:
+            values.pop("execution_metadata")
         return values
 
 
@@ -443,6 +453,7 @@ def load_long_run_td3_config(path: Path) -> LongRunTD3Config:
         "training_profile_ids",
         "curriculum_id",
         "curriculum_config_digest",
+        "execution_metadata",
         "output",
         "validation",
     }
@@ -537,7 +548,7 @@ def run_fake_td3_smoke(
     source_state: LongRunRunState | None = None
     if plan.mode is ResumeMode.NEW:
         effective_run_id = run_id or f"m13-7-{uuid.uuid4().hex[:12]}"
-        model = _new_td3(effective_config, env)
+        model = create_td3_model(effective_config, env)
     elif plan.mode is ResumeMode.MODEL_ONLY_WARM_START:
         effective_run_id = run_id or f"m13-7-warm-{uuid.uuid4().hex[:10]}"
         model = TD3.load(
@@ -629,7 +640,8 @@ def run_fake_td3_smoke(
         env.close()
 
 
-def _new_td3(config: LongRunTD3Config, env: gym.Env) -> TD3:
+def create_td3_model(config: LongRunTD3Config, env: gym.Env) -> TD3:
+    """Construct TD3 with the canonical M13.7 persistence-compatible settings."""
     action_noise = NormalActionNoise(
         mean=np.zeros(3, dtype=np.float32),
         sigma=np.asarray(config.action_noise_std, dtype=np.float32),
@@ -805,6 +817,7 @@ __all__ = [
     "LongRunTrainingResult",
     "LongRunValidationConfig",
     "SafeCheckpointCallback",
+    "create_td3_model",
     "load_long_run_td3_config",
     "run_fake_td3_smoke",
     "validate_long_run_configuration",

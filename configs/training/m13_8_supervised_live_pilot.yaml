@@ -1,0 +1,37 @@
+schema_version: 1
+curriculum_config_path: configs/training/m13_8_static_obstacle_curriculum.yaml
+m13_6_config_path: configs/evaluation/m13_6_reference_controllers.yaml
+obstacle_environment_config_path: configs/env/m13_5_obstacle_uav_env.yaml
+vehicle_name: SimpleFlight
+lidar_name: LidarSensor1
+client_module: cosysairsim
+locked_feasibility_digest: 7ab64205ccb7fd055d2ed0b5f42528d1e7be0772ed46224197427b96c6baa1b6
+outputs:
+  model_root: results/trained_models/m13_8_static_curriculum
+  log_root: results/logs/m13_8_static_curriculum
+  report_root: results/reports/m13/curriculum
+  m13_6_report_root: results/reports/m13/reference_controllers
+  prerequisite_report_root: results/reports/m13
+stages:
+  - stage_id: stage-0
+    profile_id: curriculum-empty-train
+    base_seed: 20000
+    obstacle_count: 0
+    requires_stage_0_report: false
+    smoke:
+      minimum_requested_steps: 100
+      cumulative_cap_steps: 500
+    pilot:
+      minimum_requested_steps: 2000
+      cumulative_cap_steps: 5000
+  - stage_id: stage-1
+    profile_id: curriculum-blocker-train
+    base_seed: 21000
+    obstacle_count: 1
+    requires_stage_0_report: true
+    smoke:
+      minimum_requested_steps: 100
+      cumulative_cap_steps: 500
+    pilot:
+      minimum_requested_steps: 2000
+      cumulative_cap_steps: 5000

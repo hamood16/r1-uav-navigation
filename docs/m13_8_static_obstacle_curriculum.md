@@ -18,8 +18,9 @@ The implementation provides:
 - Additive M13.7 checkpoint and full-resume metadata.
 - Offline CLI validation and a bounded fake TD3 checkpoint/resume smoke.
 
-Phase B live pilots remain future supervised work. No live command is exposed by
-the M13.8 script.
+Phase B supervised-pilot software is implemented, but no live pilot has been
+executed. The live commands remain blocked until a human operator supplies every
+authorization and the complete accepted M13.6 supervised evidence matrix.
 
 ## Protected Contracts
 
@@ -172,11 +173,90 @@ python scripts/train_m13_8_static_curriculum.py preview-stages
 python scripts/train_m13_8_static_curriculum.py fake-smoke --timesteps 100
 python scripts/train_m13_8_static_curriculum.py inspect-curriculum-state <path>
 python scripts/train_m13_8_static_curriculum.py summarize <report.json>
+python scripts/train_m13_8_static_curriculum.py summarize-live-pilot <report.json>
 ```
 
-The command surface contains no `run`, `pilot`, or hidden live mode. Help,
-validation, preview, smoke, inspection, and summarization do not import AirSim or
-`cosysairsim`.
+Help, validation, preview, smoke, inspection, preflight, and summarization do not
+import AirSim or `cosysairsim`.
+
+## Phase B Supervised Pilots
+
+Phase B exposes three gated operator commands:
+
+- `preflight-live-pilot` performs the complete offline check and never imports a
+  simulator client.
+- `pilot-stage` starts one new bounded Stage 0 or Stage 1 segment only after
+  preflight succeeds.
+- `resume-pilot` performs a strict full resume of the same run, stage, course,
+  pilot kind, replay, and compatibility identity.
+
+There is no automatic run, stage promotion, background launcher, worker
+termination, or broad simulator reset.
+
+The only accepted live identities are:
+
+| Stage | Profile | Seed | Smoke cap | Pilot cap |
+| --- | --- | ---: | ---: | ---: |
+| `stage-0` | `curriculum-empty-train` | `20000` | 500 | 5,000 |
+| `stage-1` | `curriculum-blocker-train` | `21000` | 500 | 5,000 |
+
+Smoke requests must contain 100–500 steps. Pilot requests must contain
+2,000–5,000 steps. Full resume counts prior completed pilot steps, so repeated
+resumes cannot exceed the corresponding cumulative cap. Stage 1 also requires
+an accepted Stage 0 pilot report. Stage 2–5 and every M13.9 final-held-out seed
+are rejected before client import.
+
+Real execution requires explicit M13.6 episode reports covering the complete
+required controller matrix. The reports, their individual content digests, and
+the recomputed suite digest must agree. A confirmation flag or fake test fixture
+cannot replace accepted supervised evidence.
+
+Every live preflight requires the existing scene, marker, flight,
+start-positioning, and airspace authorizations plus explicit training,
+operator-presence, ignored-results, M13.6-evidence, and named-cleanup
+confirmations. It also validates accepted preflight-survey and grounded-LiDAR
+reports, a clean tracked worktree, ignored output roots, the locked feasibility
+digest, and exact vehicle/sensor names.
+
+The complete authorization surface is:
+
+```text
+--allow-live-rpc
+--allow-scene-mutation
+--allow-debug-markers
+--allow-marker-flush
+--allow-flight
+--allow-start-positioning
+--allow-training
+--confirm-results-root-ignored
+--confirm-m13-6-supervised-evidence-accepted
+--confirm-preflight-survey-passed
+--confirm-grounded-lidar-passed
+--confirm-clear-airspace
+--confirm-scene-area-clear
+--confirm-no-visible-collision
+--confirm-manual-operator-present
+--confirm-named-cleanup-required
+```
+
+The runtime lazily imports the simulator client only after preflight returns an
+immutable prepared plan. It uses the M13.5 named lifecycle and M13.7 safe
+checkpoint bundles. Each segment saves an initial bundle before learning and a
+final bundle after the last consistent transition when possible. Full resume
+restores replay and exact curriculum/pilot metadata. An interruption preserves
+the latest complete bundle and still attempts named cleanup.
+
+Pilot reports distinguish preflight, infrastructure, checkpoint, cleanup,
+safety, and task outcomes. Stage 1 may include bounded route-shape summaries,
+never a raw trajectory. Every report keeps these claims false:
+
+- curriculum promotion;
+- learned obstacle avoidance;
+- final policy performance or generalization;
+- real-world readiness.
+
+The command software has fake-environment acceptance only. A human operator must
+review it and run each future live command manually.
 
 ## Limitations
 

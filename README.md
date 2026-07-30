@@ -47,10 +47,12 @@ The current project demonstrates:
   model/replay/run-state bundles, strict resume and model-only warm start,
   deterministic validation-based best checkpoints, heartbeat supervision
   decisions, and throughput evidence. No long or live training has been run.
-- M13.8 Phase A provides an offline six-stage static-obstacle curriculum,
+- M13.8 provides an offline six-stage static-obstacle curriculum,
   deterministic training/validation split enforcement, course and robustness
   samplers, promotion gates, route-shape evidence, and M13.7 curriculum-state
-  checkpoint/resume support. No curriculum training or live pilot has been run.
+  checkpoint/resume support. Phase B adds strictly gated supervised-pilot
+  tooling for bounded Stage 0/1 runs, but no curriculum training or live pilot
+  has been run.
 
 ## Current M12 Baseline
 
@@ -108,9 +110,10 @@ environment is implemented. M13.6 reference-controller software is also
 implemented with fake-client/offline evidence. Supervised M13.6 course runs and
 later obstacle-aware policy training remain future work. M13.7 Phase A
 infrastructure is implemented offline; it does not demonstrate a trained
-obstacle-aware policy or a recovered live run. M13.8 Phase A curriculum
-infrastructure is also implemented offline. Its M13.9 final-test seeds remain
-excluded from training and curriculum promotion.
+obstacle-aware policy or a recovered live run. M13.8 curriculum infrastructure
+and supervised-pilot command software are implemented, but no live pilot has
+been executed. Its M13.9 final-test seeds remain excluded from training and
+curriculum promotion.
 
 ## Tech Stack
 
